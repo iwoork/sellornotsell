@@ -140,11 +140,10 @@ export async function POST(request: Request) {
 function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
   // Required fields validation
   const required = [
-    "firstName", "lastName", "email", "phone",
-    "address", "city", "province", "postalCode",
-    "purchasePrice", "purchaseYear", "downPayment",
-    "currentMortgageBalance", "mortgageRate", "mortgageType",
-    "amortizationYearsRemaining",
+    "firstName", "lastName", "email",
+    "city", "province",
+    "purchasePrice", "purchaseYear",
+    "currentMortgageBalance", "mortgageRate",
     "propertyType", "bedrooms", "bathrooms", "estimatedCurrentValue",
     "annualPropertyTax",
     "sellingReason", "timeline",
@@ -166,14 +165,9 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
     throw new Error("Invalid email address.");
   }
 
-  // Canadian postal code validation
-  const postalCode = String(body.postalCode).toUpperCase().replace(/\s/g, "");
-  if (!/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(postalCode)) {
-    throw new Error("Invalid Canadian postal code.");
-  }
-
   const purchasePrice = Number(body.purchasePrice);
-  const downPayment = Number(body.downPayment);
+  const mortgageBalance = Number(body.currentMortgageBalance);
+  const downPayment = body.downPayment ? Number(body.downPayment) : Math.max(0, purchasePrice - mortgageBalance);
   const purchaseYear = Number(body.purchaseYear);
 
   // Map form mortgage type to our type
@@ -220,11 +214,11 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
       firstName: String(body.firstName).trim(),
       lastName: String(body.lastName).trim(),
       email,
-      phone: String(body.phone).trim(),
-      address: String(body.address).trim(),
+      phone: String(body.phone || "").trim(),
+      address: String(body.address || "").trim(),
       city: String(body.city).trim(),
       province: String(body.province) as AssessmentInput["lead"]["province"],
-      postalCode: postalCode.slice(0, 3) + " " + postalCode.slice(3),
+      postalCode: body.postalCode ? String(body.postalCode).toUpperCase().replace(/\s/g, "").replace(/^(.{3})/, "$1 ") : "",
       consentMarketing: true,
       consentPrivacy: Boolean(body.consent),
     },
@@ -232,11 +226,11 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
       purchasePrice,
       purchaseYear,
       downPaymentPercent: purchasePrice > 0 ? Math.round((downPayment / purchasePrice) * 100) : 0,
-      mortgageBalance: Number(body.currentMortgageBalance),
+      mortgageBalance: mortgageBalance,
       mortgageRate: Number(body.mortgageRate),
-      mortgageType: mortgageTypeMap[String(body.mortgageType)] ?? "variable",
-      amortizationYears: Number(body.amortizationYearsRemaining),
-      remainingTermYears: Math.min(5, Number(body.amortizationYearsRemaining)), // Assume max 5yr term for MVP
+      mortgageType: body.mortgageType ? (mortgageTypeMap[String(body.mortgageType)] ?? "variable") : "variable",
+      amortizationYears: body.amortizationYearsRemaining ? Number(body.amortizationYearsRemaining) : 20,
+      remainingTermYears: body.amortizationYearsRemaining ? Math.min(5, Number(body.amortizationYearsRemaining)) : 5,
     },
     property: {
       propertyType: propertyTypeMap[String(body.propertyType)] ?? "other",

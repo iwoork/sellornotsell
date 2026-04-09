@@ -1,17 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #1d4ed8;
-  --primary-hover: #1e40af;
-  --primary-light: #eff6ff;
-  --accent: #059669;
-  --accent-light: #ecfdf5;
-  --sell: #dc2626;
-  --hold: #059669;
-  --muted: #6b7280;
-  --border: #e5e7eb;
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --primary: #0f766e;
+  --primary-hover: #0d9488;
+  --primary-light: #f0fdfa;
+  --accent: #0f766e;
+  --accent-light: #f0fdfa;
+  --sell: #c2410c;
+  --sell-light: #fff7ed;
+  --hold: #15803d;
+  --hold-light: #f0fdf4;
+  --muted: #78716c;
+  --border: #e7e5e4;
+  --card: #ffffff;
+  --surface: #f5f5f4;
 }
 
 @theme inline {
@@ -23,9 +27,13 @@
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
   --color-sell: var(--sell);
+  --color-sell-light: var(--sell-light);
   --color-hold: var(--hold);
+  --color-hold-light: var(--hold-light);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -34,4 +42,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Smooth focus transitions */
+input, select, textarea, button {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Remove default number input spinners for cleaner look */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Subtle selection color */
+::selection {
+  background: #ccfbf1;
+  color: #0f766e;
 }
