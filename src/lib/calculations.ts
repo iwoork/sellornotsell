@@ -1,0 +1,322 @@
+import type { FinancialBreakdown, MortgageType } from "./types";
+
+// ── Input for financial calculations ──────────────────────────────────────────
+
+export interface CalcInput {
+  purchasePrice: number;
+  purchaseYear: number;
+  estimatedValue: number;
+  mortgageBalance: number;
+  mortgageRate: number; // annual percentage, e.g. 4.5
+  mortgageType: MortgageType;
+  amortizationYearsRemaining: number;
+  remainingTermYears: number;
+  propertyTax: number; // annual
+  condoFees: number; // monthly
+  isPrimaryResidence: boolean;
+  yearsOccupiedAsPrimary: number;
+  province: string;
+}
+
+// ── Mortgage helpers ──────────────────────────────────────────────────────────
+
+/** Monthly mortgage payment using standard amortization formula */
+export function monthlyMortgagePayment(
+  balance: number,
+  annualRate: number,
+  amortizationMonths: number
+): number {
+  if (balance <= 0 || amortizationMonths <= 0) return 0;
+  if (annualRate <= 0) return balance / amortizationMonths;
+
+  // Canadian mortgages compound semi-annually, so convert to effective monthly rate
+  const semiAnnualRate = annualRate / 100 / 2;
+  const effectiveMonthlyRate = Math.pow(1 + semiAnnualRate, 1 / 6) - 1;
+
+  const numerator = balance * effectiveMonthlyRate;
+  const denominator = 1 - Math.pow(1 + effectiveMonthlyRate, -amortizationMonths);
+  return numerator / denominator;
+}
+
+// ── Mortgage penalty estimation ───────────────────────────────────────────────
+
+/**
+ * Variable rate: 3 months' interest on the outstanding balance
+ * Fixed rate: greater of (a) 3 months' interest or (b) Interest Rate Differential (IRD)
+ */
+export function estimateMortgagePenalty(
+  balance: number,
+  annualRate: number,
+  mortgageType: MortgageType,
+  remainingTermYears: number,
+  currentPostedRate: number = 5.0 // fallback posted rate for IRD
+): number {
+  if (balance <= 0) return 0;
+
+  const threeMonthsInterest = balance * (annualRate / 100) * (3 / 12);
+
+  if (mortgageType === "variable") {
+    return Math.round(threeMonthsInterest);
+  }
+
+  // Fixed: IRD = (contract rate - current rate) * balance * remaining term
+  const rateDiff = Math.max(0, annualRate / 100 - currentPostedRate / 100);
+  const ird = rateDiff * balance * remainingTermYears;
+  return Math.round(Math.max(threeMonthsInterest, ird));
+}
+
+// ── Selling costs ─────────────────────────────────────────────────────────────
+
+export interface SellingCosts {
+  commission: number;
+  legalFees: number;
+  mortgagePenalty: number;
+  closingCosts: number;
+  total: number;
+}
+
+export function calculateSellingCosts(
+  estimatedValue: number,
+  mortgageBalance: number,
+  mortgageRate: number,
+  mortgageType: MortgageType,
+  remainingTermYears: number
+): SellingCosts {
+  // Commission: 5% of sale price (standard Canadian split)
+  const commission = Math.round(estimatedValue * 0.05);
+
+  // Legal fees: $1,500 – $2,500 range; scale slightly with value
+  const legalFees = estimatedValue > 1_000_000 ? 2500 : estimatedValue > 500_000 ? 2000 : 1500;
+
+  // Mortgage penalty
+  const mortgagePenalty = estimateMortgagePenalty(
+    mortgageBalance,
+    mortgageRate,
+    mortgageType,
+    remainingTermYears
+  );
+
+  // Closing costs: title insurance, adjustments, misc (~$1,000-$2,000)
+  const closingCosts = estimatedValue > 1_000_000 ? 2000 : 1500;
+
+  const total = commission + legalFees + mortgagePenalty + closingCosts;
+
+  return { commission, legalFees, mortgagePenalty, closingCosts, total };
+}
+
+// ── Capital gains tax ─────────────────────────────────────────────────────────
+
+export interface CapitalGainsResult {
+  totalGain: number;
+  exemptionApplied: boolean;
+  taxableGain: number;
+  estimatedTax: number;
+}
+
+/**
+ * Canadian capital gains on real estate:
+ * - Principal residence exemption: if the property was your principal residence
+ *   for ALL years of ownership, the gain is fully exempt.
+ * - Partial exemption: exempt portion = (1 + years designated) / years owned
+ * - Only 50% of the remaining taxable gain is included in income (inclusion rate).
+ * - We estimate tax at a combined marginal rate based on province.
+ */
+export function calculateCapitalGains(
+  purchasePrice: number,
+  estimatedValue: number,
+  purchaseYear: number,
+  currentYear: number,
+  isPrimaryResidence: boolean,
+  yearsOccupiedAsPrimary: number,
+  province: string
+): CapitalGainsResult {
+  const totalGain = estimatedValue - purchasePrice;
+
+  if (totalGain <= 0) {
+    return { totalGain, exemptionApplied: false, taxableGain: 0, estimatedTax: 0 };
+  }
+
+  const yearsOwned = Math.max(1, currentYear - purchaseYear);
+
+  // Full principal residence exemption
+  if (isPrimaryResidence && yearsOccupiedAsPrimary >= yearsOwned) {
+    return { totalGain, exemptionApplied: true, taxableGain: 0, estimatedTax: 0 };
+  }
+
+  // Partial exemption
+  let exemptFraction = 0;
+  if (isPrimaryResidence && yearsOccupiedAsPrimary > 0) {
+    // Formula: (1 + years designated as principal residence) / years owned
+    exemptFraction = Math.min(1, (1 + yearsOccupiedAsPrimary) / yearsOwned);
+  }
+
+  const taxableGain = Math.round(totalGain * (1 - exemptFraction));
+
+  // 50% inclusion rate (first $250k; after June 25, 2024 changes, 66.7% above $250k)
+  const inclusionThreshold = 250_000;
+  let includedGain: number;
+  if (taxableGain <= inclusionThreshold) {
+    includedGain = taxableGain * 0.5;
+  } else {
+    includedGain = inclusionThreshold * 0.5 + (taxableGain - inclusionThreshold) * 0.6667;
+  }
+
+  // Estimated combined marginal tax rate by province (approximate top bracket)
+  const marginalRate = getEstimatedMarginalRate(province);
+  const estimatedTax = Math.round(includedGain * marginalRate);
+
+  return {
+    totalGain,
+    exemptionApplied: exemptFraction > 0,
+    taxableGain,
+    estimatedTax,
+  };
+}
+
+function getEstimatedMarginalRate(province: string): number {
+  // Combined federal + provincial marginal rates (approximate, for ~$100k income bracket)
+  const rates: Record<string, number> = {
+    Alberta: 0.38,
+    "British Columbia": 0.41,
+    Manitoba: 0.44,
+    "New Brunswick": 0.43,
+    "Newfoundland and Labrador": 0.45,
+    "Nova Scotia": 0.46,
+    Ontario: 0.43,
+    "Prince Edward Island": 0.44,
+    Quebec: 0.47,
+    Saskatchewan: 0.40,
+  };
+  return rates[province] ?? 0.43;
+}
+
+// ── Monthly carrying costs ────────────────────────────────────────────────────
+
+export interface CarryingCosts {
+  mortgage: number;
+  propertyTax: number;
+  insurance: number;
+  maintenance: number;
+  condoFees: number;
+  total: number;
+}
+
+export function calculateMonthlyCarryingCosts(
+  mortgageBalance: number,
+  mortgageRate: number,
+  amortizationYearsRemaining: number,
+  annualPropertyTax: number,
+  monthlyCondoFees: number,
+  estimatedValue: number
+): CarryingCosts {
+  const mortgage = monthlyMortgagePayment(
+    mortgageBalance,
+    mortgageRate,
+    amortizationYearsRemaining * 12
+  );
+
+  const propertyTax = annualPropertyTax / 12;
+
+  // Insurance: ~0.3-0.5% of home value annually
+  const insurance = (estimatedValue * 0.004) / 12;
+
+  // Maintenance: ~1% of home value annually
+  const maintenance = (estimatedValue * 0.01) / 12;
+
+  const total = mortgage + propertyTax + insurance + maintenance + monthlyCondoFees;
+
+  return {
+    mortgage: Math.round(mortgage),
+    propertyTax: Math.round(propertyTax),
+    insurance: Math.round(insurance),
+    maintenance: Math.round(maintenance),
+    condoFees: Math.round(monthlyCondoFees),
+    total: Math.round(total),
+  };
+}
+
+// ── Break-even analysis ───────────────────────────────────────────────────────
+
+/**
+ * Estimate how many months of holding would make selling costs worthwhile.
+ * Uses approximate annual appreciation rate.
+ * Returns null if appreciation doesn't cover costs (market declining).
+ */
+export function calculateBreakEvenMonths(
+  estimatedValue: number,
+  totalSellingCosts: number,
+  annualAppreciationRate: number = 0.03 // default 3%
+): number | null {
+  if (annualAppreciationRate <= 0) return null;
+
+  const monthlyAppreciation = estimatedValue * (annualAppreciationRate / 12);
+  if (monthlyAppreciation <= 0) return null;
+
+  const months = Math.ceil(totalSellingCosts / monthlyAppreciation);
+  return months;
+}
+
+// ── Main calculation orchestrator ─────────────────────────────────────────────
+
+export function calculateFinancials(input: CalcInput): FinancialBreakdown {
+  const currentYear = new Date().getFullYear();
+
+  // Equity
+  const estimatedEquity = input.estimatedValue - input.mortgageBalance;
+
+  // Selling costs
+  const costs = calculateSellingCosts(
+    input.estimatedValue,
+    input.mortgageBalance,
+    input.mortgageRate,
+    input.mortgageType,
+    input.remainingTermYears
+  );
+
+  // Net proceeds
+  const netProceeds = estimatedEquity - costs.total;
+
+  // Capital gains
+  const capitalGains = calculateCapitalGains(
+    input.purchasePrice,
+    input.estimatedValue,
+    input.purchaseYear,
+    currentYear,
+    input.isPrimaryResidence,
+    input.yearsOccupiedAsPrimary,
+    input.province
+  );
+
+  // Monthly carrying cost
+  const carryingCosts = calculateMonthlyCarryingCosts(
+    input.mortgageBalance,
+    input.mortgageRate,
+    input.amortizationYearsRemaining,
+    input.propertyTax,
+    input.condoFees,
+    input.estimatedValue
+  );
+
+  // Break-even
+  const breakEvenMonths = calculateBreakEvenMonths(input.estimatedValue, costs.total);
+
+  return {
+    estimatedEquity: Math.round(estimatedEquity),
+    sellingCosts: {
+      commission: costs.commission,
+      legalFees: costs.legalFees,
+      mortgagePenalty: costs.mortgagePenalty,
+      closingCosts: costs.closingCosts,
+      total: costs.total,
+    },
+    netProceeds: Math.round(netProceeds - capitalGains.estimatedTax),
+    capitalGains: {
+      totalGain: capitalGains.totalGain,
+      exemptionApplied: capitalGains.exemptionApplied,
+      taxableGain: capitalGains.taxableGain,
+      estimatedTax: capitalGains.estimatedTax,
+    },
+    monthlyCarryingCost: carryingCosts.total,
+    breakEvenMonths,
+  };
+}
