@@ -1,14 +1,14 @@
 # Ralph Fix Plan
 
 ## High Priority
-- [ ] Initialize Next.js 15 project with App Router, Tailwind CSS, and TypeScript
+- [x] Initialize Next.js 15 project with App Router, Tailwind CSS, and TypeScript
 - [ ] Set up Supabase client configuration (server-side service role, environment variables)
 - [ ] Create database schema migrations (leads, assessments, market_data, bank_rates tables)
 - [x] Build landing page (`/`) with value proposition, CTA, trust signals, province selector
-- [ ] Build multi-step wizard (`/assess`) — Step 1: Lead capture (name, email, phone, address with autocomplete, consent checkbox)
-- [ ] Build multi-step wizard (`/assess`) — Step 2: Purchase information (price, year, down payment, mortgage details)
-- [ ] Build multi-step wizard (`/assess`) — Step 3: Property details (type, bedrooms, bathrooms, sqft, condo fees, taxes, renovations)
-- [ ] Build multi-step wizard (`/assess`) — Step 4: Homeowner goals (selling reasons, timeline, move destination)
+- [x] Build multi-step wizard (`/assess`) — Step 1: Lead capture (name, email, phone, address with autocomplete, consent checkbox)
+- [x] Build multi-step wizard (`/assess`) — Step 2: Purchase information (price, year, down payment, mortgage details)
+- [x] Build multi-step wizard (`/assess`) — Step 3: Property details (type, bedrooms, bathrooms, sqft, condo fees, taxes, renovations)
+- [x] Build multi-step wizard (`/assess`) — Step 4: Homeowner goals (selling reasons, timeline, move destination)
 - [ ] Implement server-side financial calculation engine (mortgage amortization, equity, selling costs, capital gains, carrying costs, net gain/loss)
 - [ ] Build API route `POST /api/assess` — validate inputs, save lead + assessment to Supabase, run calculations, call Claude API, return result
 - [ ] Integrate Claude API for sell/hold recommendation with structured JSON output and decision-engine prompt
