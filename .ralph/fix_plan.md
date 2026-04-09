@@ -19,14 +19,14 @@
 - [x] Implement capital gains tax logic with principal residence exemption (full and partial)
 - [x] Implement mortgage penalty estimation (variable: 3 months interest; fixed: max of 3 months or IRD)
 - [x] Build API route `GET /api/result/[id]` — fetch assessment result from Supabase
-- [ ] Build API route `GET /api/market-data` — return cached market data by province/city
-- [ ] Add animated loading state during AI analysis ("Analyzing your property...", "Checking market conditions...", etc.)
-- [ ] Create privacy policy page (`/privacy`) with PIPEDA/PIPA/Quebec Law 25 compliance
-- [ ] Create terms of service page (`/terms`)
+- [x] Build API route `GET /api/market-data` — return cached market data by province/city
+- [x] Add animated loading state during AI analysis ("Analyzing your property...", "Checking market conditions...", etc.)
+- [x] Create privacy policy page (`/privacy`) with PIPEDA/PIPA/Quebec Law 25 compliance
+- [x] Create terms of service page (`/terms`)
 - [x] Add SEO meta tags, Open Graph cards, and social sharing support
 - [x] Implement SearchStrata cross-promotion for condo property types on result page
-- [ ] Seed initial market data for major Canadian cities (Toronto, Vancouver, Calgary, Montreal, Ottawa, etc.)
-- [ ] Seed current Bank of Canada interest rates
+- [x] Seed initial market data for major Canadian cities (Toronto, Vancouver, Calgary, Montreal, Ottawa, etc.)
+- [x] Seed current Bank of Canada interest rates
 
 ## Low Priority
 - [ ] Add form abandonment tracking (which wizard step users drop off)

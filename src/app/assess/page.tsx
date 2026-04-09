@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const PROVINCES = [
   "Alberta",
@@ -404,6 +404,40 @@ function Step4({ form, update }: { form: FormData; update: (patch: Partial<FormD
   );
 }
 
+const LOADING_MESSAGES = [
+  "Analyzing your property details...",
+  "Calculating mortgage & equity...",
+  "Estimating selling costs...",
+  "Checking capital gains implications...",
+  "Reviewing market conditions...",
+  "Generating your AI recommendation...",
+];
+
+function LoadingScreen() {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-1 items-center justify-center bg-gray-50 px-4 py-20">
+      <div className="text-center">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-primary" />
+        <p className="mt-6 text-lg font-semibold text-foreground">
+          {LOADING_MESSAGES[messageIndex]}
+        </p>
+        <p className="mt-2 text-sm text-muted">
+          This usually takes 10-20 seconds.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function AssessPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
@@ -470,6 +504,9 @@ export default function AssessPage() {
         </div>
       </header>
 
+      {submitting ? (
+        <LoadingScreen />
+      ) : (
       <main className="flex-1 bg-gray-50 px-4 py-10 sm:px-6">
         <div className="mx-auto max-w-2xl">
           <StepIndicator currentStep={step} />
@@ -527,6 +564,7 @@ export default function AssessPage() {
           </div>
         </div>
       </main>
+      )}
     </>
   );
 }
