@@ -24,12 +24,8 @@ export default function PrivacyPage() {
           <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
               <rect width="32" height="32" rx="7" fill="#0f766e"/>
-              <line x1="16" y1="6.5" x2="16" y2="24" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="5.5" y1="13.5" x2="26.5" y2="10.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M5.5 13.5l1.5 5.5h6l1.5-5.5" stroke="white" strokeWidth="1.4" strokeLinejoin="round" fill="white" fillOpacity="0.2"/>
-              <path d="M19 10.5l1.5 5.5h6l1.5-5.5" stroke="white" strokeWidth="1.4" strokeLinejoin="round" fill="white" fillOpacity="0.1"/>
-              <line x1="11" y1="24" x2="21" y2="24" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M14 24l2-3 2 3" fill="white"/>
+              <path d="M5 18L16 8l11 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <rect x="13" y="18" width="6" height="8" rx="1" fill="white" fillOpacity="0.9"/>
             </svg>
             <span>
               <span className="text-primary">Sell</span>
