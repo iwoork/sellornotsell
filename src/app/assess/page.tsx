@@ -2,19 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-
-const CITIES_BY_PROVINCE: Record<string, string[]> = {
-  Alberta: ["Calgary", "Edmonton", "Red Deer", "Lethbridge", "St. Albert", "Medicine Hat", "Grande Prairie", "Airdrie", "Spruce Grove", "Okotoks"],
-  "British Columbia": ["Vancouver", "Victoria", "Burnaby", "Surrey", "Kelowna", "Kamloops", "Nanaimo", "Abbotsford", "Chilliwack", "Prince George"],
-  Manitoba: ["Winnipeg", "Brandon", "Steinbach", "Thompson", "Portage la Prairie", "Selkirk", "Winkler", "Morden", "Dauphin"],
-  "New Brunswick": ["Moncton", "Saint John", "Fredericton", "Dieppe", "Miramichi", "Bathurst", "Edmundston", "Riverview"],
-  "Newfoundland and Labrador": ["St. John's", "Mount Pearl", "Corner Brook", "Conception Bay South", "Paradise", "Grand Falls-Windsor", "Gander"],
-  "Nova Scotia": ["Halifax", "Dartmouth", "Sydney", "Truro", "New Glasgow", "Bridgewater", "Kentville", "Antigonish"],
-  Ontario: ["Toronto", "Ottawa", "Mississauga", "Brampton", "Hamilton", "London", "Markham", "Vaughan", "Kitchener", "Windsor", "Richmond Hill", "Oakville", "Burlington", "Oshawa", "Barrie", "Kingston", "Guelph", "Cambridge", "Waterloo", "St. Catharines"],
-  "Prince Edward Island": ["Charlottetown", "Summerside", "Stratford", "Cornwall", "Montague"],
-  Quebec: ["Montreal", "Quebec City", "Laval", "Gatineau", "Longueuil", "Sherbrooke", "Levis", "Saguenay", "Trois-Rivieres", "Terrebonne"],
-  Saskatchewan: ["Saskatoon", "Regina", "Prince Albert", "Moose Jaw", "Swift Current", "Yorkton", "North Battleford", "Estevan"],
-};
+import { CITIES_BY_PROVINCE } from "@/lib/cities";
 
 const PROVINCES = [
   "Alberta",
@@ -245,8 +233,8 @@ function CityCombobox({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const allCities = province
-    ? (CITIES_BY_PROVINCE[province] ?? [])
+  const allCities = province && province in CITIES_BY_PROVINCE
+    ? (CITIES_BY_PROVINCE[province as keyof typeof CITIES_BY_PROVINCE] ?? [])
     : Object.values(CITIES_BY_PROVINCE).flat().sort();
 
   const filtered = value
