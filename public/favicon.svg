@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <rect width="32" height="32" rx="7" fill="#0f766e"/>
-  <!-- Roof peak — bold chevron -->
-  <path d="M5 18L16 8l11 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- Door -->
-  <rect x="13" y="18" width="6" height="8" rx="1" fill="white" fill-opacity="0.9"/>
+  <!-- Roof peak -->
+  <path d="M5 16L16 7l11 9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Question mark -->
+  <path d="M13 20.5a3 3 0 1 1 4.5 2.6c-.6.35-1.5.9-1.5 1.9" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <circle cx="16" cy="27.5" r="1.2" fill="white"/>
 </svg>
