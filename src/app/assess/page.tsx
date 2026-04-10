@@ -1,7 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const CITIES_BY_PROVINCE: Record<string, string[]> = {
+  Alberta: ["Calgary", "Edmonton", "Red Deer", "Lethbridge", "St. Albert", "Medicine Hat", "Grande Prairie", "Airdrie", "Spruce Grove", "Okotoks"],
+  "British Columbia": ["Vancouver", "Victoria", "Burnaby", "Surrey", "Kelowna", "Kamloops", "Nanaimo", "Abbotsford", "Chilliwack", "Prince George"],
+  Manitoba: ["Winnipeg", "Brandon", "Steinbach", "Thompson", "Portage la Prairie", "Selkirk", "Winkler", "Morden", "Dauphin"],
+  "New Brunswick": ["Moncton", "Saint John", "Fredericton", "Dieppe", "Miramichi", "Bathurst", "Edmundston", "Riverview"],
+  "Newfoundland and Labrador": ["St. John's", "Mount Pearl", "Corner Brook", "Conception Bay South", "Paradise", "Grand Falls-Windsor", "Gander"],
+  "Nova Scotia": ["Halifax", "Dartmouth", "Sydney", "Truro", "New Glasgow", "Bridgewater", "Kentville", "Antigonish"],
+  Ontario: ["Toronto", "Ottawa", "Mississauga", "Brampton", "Hamilton", "London", "Markham", "Vaughan", "Kitchener", "Windsor", "Richmond Hill", "Oakville", "Burlington", "Oshawa", "Barrie", "Kingston", "Guelph", "Cambridge", "Waterloo", "St. Catharines"],
+  "Prince Edward Island": ["Charlottetown", "Summerside", "Stratford", "Cornwall", "Montague"],
+  Quebec: ["Montreal", "Quebec City", "Laval", "Gatineau", "Longueuil", "Sherbrooke", "Levis", "Saguenay", "Trois-Rivieres", "Terrebonne"],
+  Saskatchewan: ["Saskatoon", "Regina", "Prince Albert", "Moose Jaw", "Swift Current", "Yorkton", "North Battleford", "Estevan"],
+};
 
 const PROVINCES = [
   "Alberta",
@@ -218,11 +231,132 @@ function Select({
   );
 }
 
+function CityCombobox({
+  value,
+  onChange,
+  province,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  province: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(-1);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const allCities = province
+    ? (CITIES_BY_PROVINCE[province] ?? [])
+    : Object.values(CITIES_BY_PROVINCE).flat().sort();
+
+  const filtered = value
+    ? allCities.filter((c) => c.toLowerCase().includes(value.toLowerCase()))
+    : allCities;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setHighlighted(-1);
+  }, [value, open]);
+
+  useEffect(() => {
+    if (highlighted >= 0 && listRef.current) {
+      const el = listRef.current.children[highlighted] as HTMLElement | undefined;
+      el?.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlighted]);
+
+  function select(city: string) {
+    onChange(city);
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      setOpen(true);
+      return;
+    }
+    if (!open) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlighted((h) => (h < filtered.length - 1 ? h + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlighted((h) => (h > 0 ? h - 1 : filtered.length - 1));
+    } else if (e.key === "Enter" && highlighted >= 0) {
+      e.preventDefault();
+      select(filtered[highlighted]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <label htmlFor="city" className="block text-sm font-medium text-foreground mb-1.5">
+        City
+      </label>
+      <input
+        id="city"
+        type="text"
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        aria-controls="city-listbox"
+        autoComplete="off"
+        placeholder="Type or select a city"
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleKeyDown}
+        className="block w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow"
+      />
+      {open && filtered.length > 0 && (
+        <ul
+          id="city-listbox"
+          ref={listRef}
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-xl border border-border bg-card shadow-lg"
+        >
+          {filtered.map((city, i) => (
+            <li
+              key={city}
+              role="option"
+              aria-selected={highlighted === i}
+              onMouseDown={() => select(city)}
+              onMouseEnter={() => setHighlighted(i)}
+              className={`cursor-pointer px-4 py-2.5 text-sm ${
+                highlighted === i
+                  ? "bg-primary-light text-primary font-medium"
+                  : "text-foreground hover:bg-surface"
+              } ${value.toLowerCase() === city.toLowerCase() ? "font-semibold" : ""}`}
+            >
+              {city}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormData>) => void }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input id="city" label="City" value={form.city} onChange={(v) => update({ city: v })} placeholder="Toronto" />
+        <CityCombobox value={form.city} onChange={(v) => update({ city: v })} province={form.province} />
         <Select id="province" label="Province" value={form.province} onChange={(v) => update({ province: v })} options={PROVINCES} placeholder="Select province" />
       </div>
       <Select id="propertyType" label="Property Type" value={form.propertyType} onChange={(v) => update({ propertyType: v })} options={PROPERTY_TYPES} />
