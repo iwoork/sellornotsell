@@ -112,6 +112,13 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
+function formatWithCommas(val: string): string {
+  const num = val.replace(/[^\d.]/g, "");
+  const [integer, decimal] = num.split(".");
+  const formatted = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decimal !== undefined ? `${formatted}.${decimal}` : formatted;
+}
+
 function Input({
   id,
   type = "text",
@@ -131,6 +138,9 @@ function Input({
   prefix?: string;
   suffix?: string;
 }) {
+  const isNumeric = type === "number";
+  const displayValue = isNumeric && value ? formatWithCommas(value) : value;
+
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-foreground mb-1.5">
@@ -145,10 +155,18 @@ function Input({
         <input
           id={id}
           name={id}
-          type={type}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          type={isNumeric ? "text" : type}
+          inputMode={isNumeric ? "decimal" : undefined}
+          placeholder={placeholder ? formatWithCommas(placeholder) : undefined}
+          value={displayValue}
+          onChange={(e) => {
+            if (isNumeric) {
+              const raw = e.target.value.replace(/[^\d.]/g, "");
+              onChange(raw);
+            } else {
+              onChange(e.target.value);
+            }
+          }}
           className={`block w-full rounded-xl border border-border bg-card py-3 text-sm text-foreground placeholder:text-muted/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow ${prefix ? "pl-8 pr-3" : suffix ? "pl-4 pr-8" : "px-4"}`}
         />
         {suffix && (
