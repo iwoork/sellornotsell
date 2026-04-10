@@ -1,15 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <rect width="32" height="32" rx="7" fill="#0f766e"/>
-  <!-- House roof -->
-  <path d="M16 4.5L3.5 14.5h3v13h19v-13h3L16 4.5z" fill="white"/>
-  <!-- Left half tinted green (hold) -->
-  <path d="M16 4.5L3.5 14.5h3v13H16V4.5z" fill="#dcfce7"/>
-  <!-- Right half tinted orange (sell) -->
-  <path d="M16 4.5l12.5 10h-3v13H16V4.5z" fill="#ffedd5"/>
-  <!-- Divider line -->
-  <line x1="16" y1="4.5" x2="16" y2="27.5" stroke="#0f766e" stroke-width="1.2"/>
-  <!-- Hold checkmark (left) -->
-  <path d="M8 17l2 2 3-4" stroke="#15803d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- Sell X (right) -->
-  <path d="M20 15l4 4M24 15l-4 4" stroke="#c2410c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Simple house silhouette -->
+  <path d="M16 6L5 15h3v11h16V15h3L16 6z" fill="white"/>
+  <!-- Minimal vertical split -->
+  <line x1="16" y1="10" x2="16" y2="26" stroke="#0f766e" stroke-width="1" opacity="0.3"/>
 </svg>

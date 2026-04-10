@@ -1,15 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none">
-  <!-- Logo mark: split house with check/X -->
-  <g>
-    <rect x="2" y="8" width="32" height="32" rx="7" fill="#0f766e"/>
-    <path d="M18 12.5L5.5 22.5h3v13H18V12.5z" fill="#dcfce7"/>
-    <path d="M18 12.5l12.5 10h-3v13H18V12.5z" fill="#ffedd5"/>
-    <line x1="18" y1="12.5" x2="18" y2="35.5" stroke="#0f766e" stroke-width="1.2"/>
-    <path d="M10 25l2 2 3-4" stroke="#15803d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <path d="M22 23l4 4M26 23l-4 4" stroke="#c2410c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <!-- Wordmark -->
-  <text x="42" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.5">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 40" fill="none">
+  <rect y="4" width="32" height="32" rx="7" fill="#0f766e"/>
+  <path d="M16 10L5 19h3v11h16V19h3L16 10z" fill="white"/>
+  <line x1="16" y1="14" x2="16" y2="30" stroke="#0f766e" stroke-width="1" opacity="0.3"/>
+  <text x="40" y="29" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" letter-spacing="-0.5">
     <tspan fill="#0f766e">Sell</tspan><tspan fill="#a8a29e">Or</tspan><tspan fill="#1c1917">NotSell</tspan>
   </text>
 </svg>

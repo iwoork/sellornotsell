@@ -23,11 +23,8 @@ export default function TermsPage() {
           <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
               <rect width="32" height="32" rx="7" fill="#0f766e"/>
-              <path d="M16 4.5L3.5 14.5h3v13H16V4.5z" fill="#dcfce7"/>
-              <path d="M16 4.5l12.5 10h-3v13H16V4.5z" fill="#ffedd5"/>
-              <line x1="16" y1="4.5" x2="16" y2="27.5" stroke="#0f766e" strokeWidth="1.2"/>
-              <path d="M8 17l2 2 3-4" stroke="#15803d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M20 15l4 4M24 15l-4 4" stroke="#c2410c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M16 6L5 15h3v11h16V15h3L16 6z" fill="white"/>
+              <line x1="16" y1="10" x2="16" y2="26" stroke="#0f766e" strokeWidth="1" opacity="0.3"/>
             </svg>
             <span>
               <span className="text-primary">Sell</span>
