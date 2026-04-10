@@ -24,13 +24,17 @@ export async function POST(request: Request) {
         first_name: input.lead.firstName,
         last_name: input.lead.lastName,
         email: input.lead.email,
-        phone: input.lead.phone,
-        address: input.lead.address,
+        phone: input.lead.phone || null,
+        address: input.lead.address || null,
         city: input.lead.city,
         province: input.lead.province,
-        postal_code: input.lead.postalCode,
+        postal_code: input.lead.postalCode || null,
         consent_marketing: input.lead.consentMarketing,
         consent_privacy: input.lead.consentPrivacy,
+        selling_reason: input.goals.sellingReason,
+        timeline: input.goals.timeline,
+        property_type: input.property.propertyType,
+        estimated_value: input.property.estimatedValue,
         source: "sellornotsell",
       })
       .select("id")
@@ -117,6 +121,19 @@ export async function POST(request: Request) {
 
     if (updateError) {
       console.error("Assessment update error:", updateError);
+    }
+
+    // 6. Update lead with verdict
+    const { error: leadUpdateError } = await getSupabase()
+      .from("leads")
+      .update({
+        verdict: recommendation.verdict,
+        confidence: recommendation.confidence,
+      })
+      .eq("id", lead.id);
+
+    if (leadUpdateError) {
+      console.error("Lead verdict update error:", leadUpdateError);
     }
 
     return NextResponse.json({

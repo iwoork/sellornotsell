@@ -1,12 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Rounded background -->
-  <rect width="32" height="32" rx="6" fill="#0f766e"/>
-  <!-- House shape -->
-  <path d="M16 5L4 15h3.5v12h17V15H28L16 5z" fill="white" fill-opacity="0.95"/>
-  <!-- Door -->
-  <rect x="13.5" y="19" width="5" height="8" rx="0.75" fill="#0f766e"/>
-  <!-- Up arrow (hold) -->
-  <path d="M9.5 16.5l2-2.5 2 2.5" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Down arrow (sell) -->
-  <path d="M18.5 14l2 2.5 2-2.5" stroke="#c2410c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="32" height="32" rx="7" fill="#0f766e"/>
+  <!-- House roof -->
+  <path d="M16 4.5L3.5 14.5h3v13h19v-13h3L16 4.5z" fill="white"/>
+  <!-- Left half tinted green (hold) -->
+  <path d="M16 4.5L3.5 14.5h3v13H16V4.5z" fill="#dcfce7"/>
+  <!-- Right half tinted orange (sell) -->
+  <path d="M16 4.5l12.5 10h-3v13H16V4.5z" fill="#ffedd5"/>
+  <!-- Divider line -->
+  <line x1="16" y1="4.5" x2="16" y2="27.5" stroke="#0f766e" stroke-width="1.2"/>
+  <!-- Hold checkmark (left) -->
+  <path d="M8 17l2 2 3-4" stroke="#15803d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Sell X (right) -->
+  <path d="M20 15l4 4M24 15l-4 4" stroke="#c2410c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

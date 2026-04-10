@@ -66,6 +66,7 @@ type FormData = {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   consent: boolean;
 };
 
@@ -86,6 +87,7 @@ const INITIAL_FORM: FormData = {
   firstName: "",
   lastName: "",
   email: "",
+  phone: "",
   consent: false,
 };
 
@@ -386,6 +388,7 @@ function Step3({ form, update }: { form: FormData; update: (patch: Partial<FormD
         </div>
       </div>
       <Input id="email" label="Email" type="email" value={form.email} onChange={(v) => update({ email: v })} placeholder="jane@example.com" />
+      <Input id="phone" label="Phone (optional)" type="tel" value={form.phone} onChange={(v) => update({ phone: v })} placeholder="(604) 555-1234" />
       <div className="flex items-start gap-3 rounded-xl bg-surface p-4">
         <input
           id="consent"
@@ -496,11 +499,12 @@ export default function AssessPage() {
         <div className="mx-auto flex max-w-lg items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
-              <rect width="32" height="32" rx="6" fill="#0f766e"/>
-              <path d="M16 5L4 15h3.5v12h17V15H28L16 5z" fill="white" fillOpacity="0.95"/>
-              <rect x="13.5" y="19" width="5" height="8" rx="0.75" fill="#0f766e"/>
-              <path d="M9.5 16.5l2-2.5 2 2.5" stroke="#0f766e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M18.5 14l2 2.5 2-2.5" stroke="#c2410c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect width="32" height="32" rx="7" fill="#0f766e"/>
+              <path d="M16 4.5L3.5 14.5h3v13H16V4.5z" fill="#dcfce7"/>
+              <path d="M16 4.5l12.5 10h-3v13H16V4.5z" fill="#ffedd5"/>
+              <line x1="16" y1="4.5" x2="16" y2="27.5" stroke="#0f766e" strokeWidth="1.2"/>
+              <path d="M8 17l2 2 3-4" stroke="#15803d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M20 15l4 4M24 15l-4 4" stroke="#c2410c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <span>
               <span className="text-primary">Sell</span>
