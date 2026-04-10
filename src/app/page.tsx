@@ -122,10 +122,19 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          <span className="text-primary">Sell</span>
-          <span className="text-muted">Or</span>
-          <span className="text-foreground">NotSell</span>
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+          <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
+            <rect width="32" height="32" rx="6" fill="#0f766e"/>
+            <path d="M16 5L4 15h3.5v12h17V15H28L16 5z" fill="white" fillOpacity="0.95"/>
+            <rect x="13.5" y="19" width="5" height="8" rx="0.75" fill="#0f766e"/>
+            <path d="M9.5 16.5l2-2.5 2 2.5" stroke="#0f766e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18.5 14l2 2.5 2-2.5" stroke="#c2410c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>
+            <span className="text-primary">Sell</span>
+            <span className="text-muted">Or</span>
+            <span className="text-foreground">NotSell</span>
+          </span>
         </Link>
         <Link
           href="/assess"

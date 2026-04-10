@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none">
+  <!-- Logo mark: house with split arrow -->
+  <g>
+    <!-- House outline -->
+    <path d="M24 6L4 22h6v18h28V22h6L24 6z" fill="#0f766e"/>
+    <!-- Door / split line creating the "decision" feel -->
+    <rect x="20" y="28" width="8" height="12" rx="1" fill="#f0fdfa"/>
+    <!-- Up arrow (hold) on left -->
+    <path d="M14 25l3-4 3 4" stroke="#f0fdfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Down arrow (sell) on right -->
+    <path d="M28 21l3 4 3-4" stroke="#f0fdfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="56" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.5">
+    <tspan fill="#0f766e">Sell</tspan><tspan fill="#a8a29e">Or</tspan><tspan fill="#1c1917">NotSell</tspan>
+  </text>
+</svg>
