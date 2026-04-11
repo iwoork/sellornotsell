@@ -57,7 +57,7 @@ function MoneyCell({ value, negative }: { value: number; negative?: boolean }) {
 function FinancialTable({ financials }: { financials: FinancialBreakdown }) {
   const rows = [
     { label: "Estimated Equity", value: financials.estimatedEquity },
-    { label: "Commission (5%)", value: financials.sellingCosts.commission, negative: true },
+    { label: "Commission (4%)", value: financials.sellingCosts.commission, negative: true },
     { label: "Legal Fees", value: financials.sellingCosts.legalFees, negative: true },
     { label: "Mortgage Penalty", value: financials.sellingCosts.mortgagePenalty, negative: true },
     { label: "Closing Costs", value: financials.sellingCosts.closingCosts, negative: true },

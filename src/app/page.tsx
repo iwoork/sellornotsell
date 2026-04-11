@@ -86,7 +86,7 @@ const jsonLd = {
           name: "What selling costs are included in the analysis?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "The analysis includes real estate commission (typically 5%), legal fees, mortgage discharge penalties (3-month interest or Interest Rate Differential for fixed-rate mortgages), closing costs, and estimated capital gains tax where applicable.",
+            text: "The analysis includes real estate commission (typically 4%), legal fees, mortgage discharge penalties (3-month interest or Interest Rate Differential for fixed-rate mortgages), closing costs, and estimated capital gains tax where applicable.",
           },
         },
         {
@@ -245,7 +245,7 @@ function HowItWorksSection() {
 function ExampleResultSection() {
   const rows = [
     { label: "Estimated Equity", value: "$310,000" },
-    { label: "Commission (5%)", value: "-$37,500", negative: true },
+    { label: "Commission (4%)", value: "-$30,000", negative: true },
     { label: "Legal Fees", value: "-$2,000", negative: true },
     { label: "Mortgage Penalty", value: "-$4,200", negative: true },
     { label: "Closing Costs", value: "-$1,800", negative: true },
@@ -303,7 +303,7 @@ function ExampleResultSection() {
                       ))}
                       <tr className="bg-surface">
                         <td className="px-4 py-3 font-semibold text-foreground">Net Proceeds</td>
-                        <td className="px-4 py-3 text-right text-lg font-bold text-foreground">$264,500</td>
+                        <td className="px-4 py-3 text-right text-lg font-bold text-foreground">$272,000</td>
                       </tr>
                     </tbody>
                   </table>
@@ -318,7 +318,7 @@ function ExampleResultSection() {
                 </div>
                 <div className="rounded-xl border border-border p-3 text-center">
                   <div className="text-xs text-muted">Selling Costs</div>
-                  <div className="mt-1 text-sm font-bold text-sell">$45,500</div>
+                  <div className="mt-1 text-sm font-bold text-sell">$38,000</div>
                 </div>
                 <div className="rounded-xl border border-border p-3 text-center">
                   <div className="text-xs text-muted">Break-Even</div>
@@ -367,7 +367,7 @@ function ExampleResultSection() {
 function WhatYouGetSection() {
   const features = [
     { title: "Equity analysis", desc: "How much you'd walk away with after selling." },
-    { title: "Selling costs", desc: "Commission, legal fees, penalties, closing costs." },
+    { title: "Selling costs", desc: "4% commission, legal fees, penalties, closing costs." },
     { title: "Capital gains", desc: "Tax implications with Canadian exemption rules." },
     { title: "Market timing", desc: "Local prices, trends, and days on market." },
     { title: "Carrying costs", desc: "Monthly cost of holding vs. potential gains." },

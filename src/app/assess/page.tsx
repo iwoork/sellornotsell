@@ -26,6 +26,12 @@ const PROPERTY_TYPES = [
   "Other",
 ] as const;
 
+const MORTGAGE_TYPES = [
+  "Fixed",
+  "Variable",
+  "Don't know",
+] as const;
+
 const SELLING_REASONS = [
   "Downsizing",
   "Upgrading",
@@ -59,6 +65,7 @@ type FormData = {
   purchaseYear: string;
   currentMortgageBalance: string;
   mortgageRate: string;
+  mortgageType: string;
   annualPropertyTax: string;
   // Step 3: About you
   sellingReason: string;
@@ -81,6 +88,7 @@ const INITIAL_FORM: FormData = {
   purchaseYear: "",
   currentMortgageBalance: "",
   mortgageRate: "",
+  mortgageType: "",
   annualPropertyTax: "",
   sellingReason: "",
   timeline: "",
@@ -369,8 +377,9 @@ function Step2({ form, update }: { form: FormData; update: (patch: Partial<FormD
       <Input id="currentMortgageBalance" label="Current Mortgage Balance" type="number" value={form.currentMortgageBalance} onChange={(v) => update({ currentMortgageBalance: v })} placeholder="350,000" prefix="$" />
       <div className="grid gap-4 sm:grid-cols-2">
         <Input id="mortgageRate" label="Mortgage Rate" type="number" value={form.mortgageRate} onChange={(v) => update({ mortgageRate: v })} placeholder="4.5" suffix="%" />
-        <Input id="annualPropertyTax" label="Annual Property Tax" type="number" value={form.annualPropertyTax} onChange={(v) => update({ annualPropertyTax: v })} placeholder="4,500" prefix="$" />
+        <Select id="mortgageType" label="Mortgage Type" value={form.mortgageType} onChange={(v) => update({ mortgageType: v })} options={MORTGAGE_TYPES} placeholder="Select type" />
       </div>
+      <Input id="annualPropertyTax" label="Annual Property Tax" type="number" value={form.annualPropertyTax} onChange={(v) => update({ annualPropertyTax: v })} placeholder="4,500" prefix="$" />
     </div>
   );
 }
@@ -458,7 +467,7 @@ export default function AssessPage() {
       case 0:
         return !!(form.city && form.province && form.propertyType && form.bedrooms && form.bathrooms && form.estimatedCurrentValue);
       case 1:
-        return !!(form.purchasePrice && form.purchaseYear && form.currentMortgageBalance && form.mortgageRate && form.annualPropertyTax);
+        return !!(form.purchasePrice && form.purchaseYear && form.currentMortgageBalance && form.mortgageRate && form.mortgageType && form.annualPropertyTax);
       case 2:
         return !!(form.sellingReason && form.timeline && form.firstName && form.lastName && form.email && form.consent);
       default:

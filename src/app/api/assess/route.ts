@@ -246,8 +246,8 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
       mortgageBalance: mortgageBalance,
       mortgageRate: Number(body.mortgageRate),
       mortgageType: body.mortgageType ? (mortgageTypeMap[String(body.mortgageType)] ?? "variable") : "variable",
-      amortizationYears: body.amortizationYearsRemaining ? Number(body.amortizationYearsRemaining) : 20,
-      remainingTermYears: body.amortizationYearsRemaining ? Math.min(5, Number(body.amortizationYearsRemaining)) : 5,
+      amortizationYears: body.amortizationYearsRemaining ? Number(body.amortizationYearsRemaining) : 25,
+      remainingTermYears: body.remainingTermYears ? Number(body.remainingTermYears) : 3,
     },
     property: {
       propertyType: propertyTypeMap[String(body.propertyType)] ?? "other",

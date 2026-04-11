@@ -82,8 +82,8 @@ export function calculateSellingCosts(
   mortgageType: MortgageType,
   remainingTermYears: number
 ): SellingCosts {
-  // Commission: 5% of sale price (standard Canadian split)
-  const commission = Math.round(estimatedValue * 0.05);
+  // Commission: ~4% of sale price (post-2024 Canadian average; was 5%)
+  const commission = Math.round(estimatedValue * 0.04);
 
   // Legal fees: $1,500 – $2,500 range; scale slightly with value
   const legalFees = estimatedValue > 1_000_000 ? 2500 : estimatedValue > 500_000 ? 2000 : 1500;
@@ -217,11 +217,11 @@ export function calculateMonthlyCarryingCosts(
 
   const propertyTax = annualPropertyTax / 12;
 
-  // Insurance: ~0.3-0.5% of home value annually
-  const insurance = (estimatedValue * 0.004) / 12;
+  // Insurance: ~0.3% of home value annually (Canadian average)
+  const insurance = (estimatedValue * 0.003) / 12;
 
-  // Maintenance: ~1% of home value annually
-  const maintenance = (estimatedValue * 0.01) / 12;
+  // Maintenance: ~0.75% of home value annually (conservative estimate)
+  const maintenance = (estimatedValue * 0.0075) / 12;
 
   const total = mortgage + propertyTax + insurance + maintenance + monthlyCondoFees;
 
