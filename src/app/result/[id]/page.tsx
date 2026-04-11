@@ -169,7 +169,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
               <rect width="32" height="32" rx="7" fill="#0f766e"/>
@@ -193,7 +193,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       </header>
 
       <main className="flex-1 px-4 py-10 sm:px-6">
-        <div className="mx-auto max-w-2xl space-y-8">
+        <div className="mx-auto max-w-3xl space-y-8">
           {/* Verdict */}
           <div className={`rounded-2xl p-8 text-center ${isSell ? "bg-sell-light" : "bg-hold-light"}`}>
             <div className={`text-5xl font-extrabold tracking-tight sm:text-6xl ${isSell ? "text-sell" : "text-hold"}`}>
@@ -287,13 +287,13 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-col items-center gap-3 pb-4 sm:flex-row sm:justify-center">
             <Link
               href="/assess"
-              className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+              className="w-full rounded-xl bg-primary px-6 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto"
             >
               Run Another Assessment
             </Link>
             <Link
               href="/"
-              className="rounded-xl border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+              className="w-full rounded-xl border border-border px-6 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-surface sm:w-auto"
             >
               Back to Home
             </Link>
@@ -302,7 +302,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       </main>
 
       <footer className="border-t border-border bg-card px-6 py-6">
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <div className="text-xs text-muted">&copy; {new Date().getFullYear()} SellOrNotSell.com</div>
           <nav className="flex gap-6 text-xs text-muted">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>

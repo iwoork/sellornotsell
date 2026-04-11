@@ -105,7 +105,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
         <span>Step {step + 1} of {total}</span>
         <span>{Math.round(progress)}%</span>
       </div>
-      <div className="h-1 w-full overflow-hidden rounded-full bg-surface">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
         <div
           className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
@@ -380,7 +380,7 @@ function Step3({ form, update }: { form: FormData; update: (patch: Partial<FormD
     <div className="space-y-5">
       <Select id="sellingReason" label="Why are you considering selling?" value={form.sellingReason} onChange={(v) => update({ sellingReason: v })} options={SELLING_REASONS} placeholder="Select a reason" />
       <Select id="timeline" label="When are you thinking of selling?" value={form.timeline} onChange={(v) => update({ timeline: v })} options={TIMELINES} placeholder="Select timeline" />
-      <div className="border-t border-gray-100 pt-5">
+      <div className="border-t border-border pt-5">
         <p className="text-xs text-muted mb-4">We&apos;ll email your personalized report.</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input id="firstName" label="First Name" value={form.firstName} onChange={(v) => update({ firstName: v })} placeholder="Jane" />
@@ -395,7 +395,7 @@ function Step3({ form, update }: { form: FormData; update: (patch: Partial<FormD
           type="checkbox"
           checked={form.consent}
           onChange={(e) => update({ consent: e.target.checked })}
-          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+          className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
         />
         <label htmlFor="consent" className="text-xs leading-5 text-muted">
           I consent to SellOrNotSell processing my information to provide a property assessment per{" "}
@@ -432,7 +432,7 @@ function LoadingScreen() {
       <div className="text-center">
         <div className="relative mx-auto h-10 w-10">
           <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-          <div className="relative h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
+          <div className="relative h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
         </div>
         <p className="mt-6 text-base font-medium text-foreground">
           {LOADING_MESSAGES[messageIndex]}

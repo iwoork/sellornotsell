@@ -18,9 +18,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function TermsPage() {
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
               <rect width="32" height="32" rx="7" fill="#0f766e"/>
               <path d="M5 16L16 7l11 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -170,21 +170,21 @@ export default function TermsPage() {
           <p>
             For questions about these Terms, please contact us:
           </p>
-          <div className="mt-2 rounded-lg border border-border bg-gray-50 p-4">
+          <div className="mt-2 rounded-lg border border-border bg-surface p-4">
             <p><strong>SellOrNotSell.com</strong></p>
             <p>Email: legal@sellornotsell.com</p>
           </div>
         </Section>
       </main>
 
-      <footer className="border-t border-border bg-white px-6 py-8">
+      <footer className="border-t border-border bg-card px-6 py-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <div className="text-sm text-muted">
+          <div className="text-xs text-muted">
             &copy; {new Date().getFullYear()} SellOrNotSell.com
           </div>
-          <nav className="flex gap-6 text-sm text-muted">
-            <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
-            <Link href="/" className="hover:text-foreground">Home</Link>
+          <nav className="flex gap-6 text-xs text-muted">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
           </nav>
         </div>
       </footer>

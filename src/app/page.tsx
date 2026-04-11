@@ -164,7 +164,7 @@ function HeroSection() {
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/assess"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-8 text-base font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+            className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-primary px-8 text-base font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover sm:w-auto"
           >
             Get My Answer
           </Link>
@@ -313,15 +313,15 @@ function ExampleResultSection() {
               {/* Metric cards */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl border border-border p-3 text-center">
-                  <div className="text-[10px] text-muted">Monthly Cost</div>
-                  <div className="mt-1 text-sm font-bold text-foreground">$2,840<span className="text-[10px] font-normal text-muted">/mo</span></div>
+                  <div className="text-xs text-muted">Monthly Cost</div>
+                  <div className="mt-1 text-sm font-bold text-foreground">$2,840<span className="text-xs font-normal text-muted">/mo</span></div>
                 </div>
                 <div className="rounded-xl border border-border p-3 text-center">
-                  <div className="text-[10px] text-muted">Selling Costs</div>
+                  <div className="text-xs text-muted">Selling Costs</div>
                   <div className="mt-1 text-sm font-bold text-sell">$45,500</div>
                 </div>
                 <div className="rounded-xl border border-border p-3 text-center">
-                  <div className="text-[10px] text-muted">Break-Even</div>
+                  <div className="text-xs text-muted">Break-Even</div>
                   <div className="mt-1 text-sm font-bold text-foreground">16 mo</div>
                 </div>
               </div>
