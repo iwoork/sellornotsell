@@ -61,7 +61,8 @@ type FormData = {
   // Step 2: Mortgage
   purchasePrice: string;
   purchaseYear: string;
-  currentMortgageBalance: string;
+  downPayment: string;
+  amortizationYears: string;
   mortgageRate: string;
   mortgageType: string;
   paymentFrequency: string;
@@ -88,7 +89,8 @@ const INITIAL_FORM: FormData = {
   monthlyStrataFees: "",
   purchasePrice: "",
   purchaseYear: "",
-  currentMortgageBalance: "",
+  downPayment: "",
+  amortizationYears: "",
   mortgageRate: "",
   mortgageType: "",
   paymentFrequency: "",
@@ -142,6 +144,7 @@ function Input({
   label,
   prefix,
   suffix,
+  noFormat,
 }: {
   id: string;
   type?: string;
@@ -151,9 +154,10 @@ function Input({
   label: string;
   prefix?: string;
   suffix?: string;
+  noFormat?: boolean;
 }) {
   const isNumeric = type === "number";
-  const displayValue = isNumeric && value ? formatWithCommas(value) : value;
+  const displayValue = isNumeric && value && !noFormat ? formatWithCommas(value) : value;
 
   return (
     <div>
@@ -496,9 +500,12 @@ function Step2({ form, update }: { form: FormData; update: (patch: Partial<FormD
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <Input id="purchasePrice" label="Purchase Price" type="number" value={form.purchasePrice} onChange={(v) => update({ purchasePrice: v })} placeholder="500,000" prefix="$" />
-        <Input id="purchaseYear" label="Year Purchased" type="number" value={form.purchaseYear} onChange={(v) => update({ purchaseYear: v })} placeholder="2019" />
+        <Input id="purchaseYear" label="Year Purchased" type="number" value={form.purchaseYear} onChange={(v) => update({ purchaseYear: v })} placeholder="2019" noFormat />
       </div>
-      <Input id="currentMortgageBalance" label="Current Mortgage Balance" type="number" value={form.currentMortgageBalance} onChange={(v) => update({ currentMortgageBalance: v })} placeholder="350,000" prefix="$" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input id="downPayment" label="Down Payment" type="number" value={form.downPayment} onChange={(v) => update({ downPayment: v })} placeholder="100,000" prefix="$" />
+        <Input id="amortizationYears" label="Amortization Period" type="number" value={form.amortizationYears} onChange={(v) => update({ amortizationYears: v })} placeholder="25" suffix="yrs" noFormat />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Input id="mortgageRate" label="Mortgage Rate" type="number" value={form.mortgageRate} onChange={(v) => update({ mortgageRate: v })} placeholder="4.5" suffix="%" />
         <Select id="mortgageType" label="Mortgage Type" value={form.mortgageType} onChange={(v) => update({ mortgageType: v })} options={MORTGAGE_TYPES} placeholder="Select type" />
@@ -592,7 +599,7 @@ export default function AssessPage() {
       case 0:
         return !!(form.streetAddress && form.city && form.province && form.propertyType && form.bedrooms && form.bathrooms && form.estimatedCurrentValue);
       case 1:
-        return !!(form.purchasePrice && form.purchaseYear && form.currentMortgageBalance && form.mortgageRate && form.mortgageType && form.paymentFrequency && form.annualPropertyTax);
+        return !!(form.purchasePrice && form.purchaseYear && form.downPayment && form.amortizationYears && form.mortgageRate && form.mortgageType && form.paymentFrequency && form.annualPropertyTax);
       case 2:
         return !!(form.sellingReason && form.timeline && form.firstName && form.lastName && form.email && form.consent);
       default:

@@ -4,6 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 import type { Metadata } from "next";
 import type { FinancialBreakdown, Verdict, ConfidenceLevel } from "@/lib/types";
 import { ThemeToggle } from "../../theme-toggle";
+import { AmortizationSchedule } from "./amortization-schedule";
 
 interface AssessmentData {
   id: string;
@@ -266,6 +267,11 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
                 </ul>
               </div>
             </section>
+          )}
+
+          {/* Amortization schedule */}
+          {financials.amortizationSchedule && financials.amortizationSchedule.length > 0 && (
+            <AmortizationSchedule schedule={financials.amortizationSchedule} />
           )}
 
           {/* SearchStrata cross-sell */}

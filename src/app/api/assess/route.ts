@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { calculateFinancials, type CalcInput, type PaymentFrequency } from "@/lib/calculations";
+import { calculateFinancials, remainingMortgageBalance, generateAmortizationSchedule, type CalcInput, type PaymentFrequency } from "@/lib/calculations";
 import { getRecommendation } from "@/lib/claude";
 import type {
   AssessmentInput,
@@ -68,6 +68,14 @@ export async function POST(request: Request) {
 
     const financials = calculateFinancials(calcInput);
 
+    // Generate amortization schedule from remaining balance
+    const amortizationSchedule = generateAmortizationSchedule(
+      calcInput.mortgageBalance,
+      calcInput.mortgageRate,
+      calcInput.amortizationYearsRemaining * 12
+    );
+    const financialsWithSchedule = { ...financials, amortizationSchedule };
+
     // 3. Save initial assessment to Supabase
     const { data: assessment, error: assessError } = await getSupabase()
       .from("assessments")
@@ -93,7 +101,7 @@ export async function POST(request: Request) {
         timeline: input.goals.timeline,
         move_destination: input.goals.moveDestination,
         additional_notes: input.goals.additionalNotes,
-        financials,
+        financials: financialsWithSchedule,
       })
       .select("id")
       .single();
@@ -161,7 +169,7 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
     "firstName", "lastName", "email",
     "city", "province",
     "purchasePrice", "purchaseYear",
-    "currentMortgageBalance", "mortgageRate",
+    "downPayment", "amortizationYears", "mortgageRate",
     "propertyType", "bedrooms", "bathrooms", "estimatedCurrentValue",
     "annualPropertyTax",
     "sellingReason", "timeline",
@@ -184,9 +192,19 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
   }
 
   const purchasePrice = Number(body.purchasePrice);
-  const mortgageBalance = Number(body.currentMortgageBalance);
-  const downPayment = body.downPayment ? Number(body.downPayment) : Math.max(0, purchasePrice - mortgageBalance);
+  const downPayment = Number(body.downPayment);
   const purchaseYear = Number(body.purchaseYear);
+  const amortizationYearsTotal = Number(body.amortizationYears) || 25;
+  const originalMortgage = Math.max(0, purchasePrice - downPayment);
+  const mortgageRate = Number(body.mortgageRate);
+  const currentYear = new Date().getFullYear();
+  const yearsSincePurchase = Math.max(0, currentYear - purchaseYear);
+  const paymentsMade = yearsSincePurchase * 12;
+  const totalAmortizationMonths = amortizationYearsTotal * 12;
+  const mortgageBalance = remainingMortgageBalance(
+    originalMortgage, mortgageRate, totalAmortizationMonths, paymentsMade
+  );
+  const amortizationYearsRemaining = Math.max(0, amortizationYearsTotal - yearsSincePurchase);
 
   // Map form mortgage type to our type
   const mortgageTypeMap: Record<string, MortgageType> = {
@@ -253,11 +271,11 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
       purchasePrice,
       purchaseYear,
       downPaymentPercent: purchasePrice > 0 ? Math.round((downPayment / purchasePrice) * 100) : 0,
-      mortgageBalance: mortgageBalance,
-      mortgageRate: Number(body.mortgageRate),
+      mortgageBalance,
+      mortgageRate,
       mortgageType: body.mortgageType ? (mortgageTypeMap[String(body.mortgageType)] ?? "variable") : "variable",
       paymentFrequency: paymentFrequencyMap[String(body.paymentFrequency)] ?? "monthly",
-      amortizationYears: body.amortizationYearsRemaining ? Number(body.amortizationYearsRemaining) : 25,
+      amortizationYears: amortizationYearsRemaining,
       remainingTermYears: body.remainingTermYears ? Number(body.remainingTermYears) : 3,
     },
     property: {

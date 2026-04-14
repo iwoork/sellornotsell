@@ -112,6 +112,13 @@ export interface FinancialBreakdown {
   };
   monthlyCarryingCost: number;
   breakEvenMonths: number | null;
+  amortizationSchedule?: {
+    period: number;
+    payment: number;
+    principal: number;
+    interest: number;
+    balance: number;
+  }[];
 }
 
 // AI result

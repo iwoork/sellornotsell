@@ -46,6 +46,71 @@ export function monthlyMortgagePayment(
   return numerator / denominator;
 }
 
+/** Calculate remaining mortgage balance after N payments */
+export function remainingMortgageBalance(
+  originalBalance: number,
+  annualRate: number,
+  totalAmortizationMonths: number,
+  paymentsMade: number
+): number {
+  if (originalBalance <= 0 || totalAmortizationMonths <= 0) return 0;
+  if (paymentsMade >= totalAmortizationMonths) return 0;
+  if (annualRate <= 0) {
+    // Simple case: no interest
+    const perPayment = originalBalance / totalAmortizationMonths;
+    return Math.max(0, originalBalance - perPayment * paymentsMade);
+  }
+
+  const semiAnnualRate = annualRate / 100 / 2;
+  const r = Math.pow(1 + semiAnnualRate, 1 / 6) - 1;
+  // Balance after n payments: B = P(1+r)^n - M[((1+r)^n - 1)/r]
+  const monthlyPayment = monthlyMortgagePayment(originalBalance, annualRate, totalAmortizationMonths);
+  const compounded = Math.pow(1 + r, paymentsMade);
+  const balance = originalBalance * compounded - monthlyPayment * ((compounded - 1) / r);
+  return Math.max(0, Math.round(balance));
+}
+
+/**
+ * Generate a full amortization schedule.
+ * Returns one entry per payment period (monthly).
+ */
+export interface AmortizationEntry {
+  period: number;
+  payment: number;
+  principal: number;
+  interest: number;
+  balance: number;
+}
+
+export function generateAmortizationSchedule(
+  originalBalance: number,
+  annualRate: number,
+  totalAmortizationMonths: number
+): AmortizationEntry[] {
+  if (originalBalance <= 0 || totalAmortizationMonths <= 0) return [];
+
+  const semiAnnualRate = annualRate / 100 / 2;
+  const r = annualRate <= 0 ? 0 : Math.pow(1 + semiAnnualRate, 1 / 6) - 1;
+  const payment = monthlyMortgagePayment(originalBalance, annualRate, totalAmortizationMonths);
+  const schedule: AmortizationEntry[] = [];
+  let balance = originalBalance;
+
+  for (let i = 1; i <= totalAmortizationMonths && balance > 0; i++) {
+    const interest = balance * r;
+    const principal = Math.min(payment - interest, balance);
+    balance = Math.max(0, balance - principal);
+    schedule.push({
+      period: i,
+      payment: Math.round(payment),
+      principal: Math.round(principal),
+      interest: Math.round(interest),
+      balance: Math.round(balance),
+    });
+  }
+
+  return schedule;
+}
+
 // ── Mortgage penalty estimation ───────────────────────────────────────────────
 
 /**
