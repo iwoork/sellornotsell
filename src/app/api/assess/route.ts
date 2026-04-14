@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { calculateFinancials, remainingMortgageBalance, generateAmortizationSchedule, type CalcInput, type PaymentFrequency } from "@/lib/calculations";
+import { calculateFinancials, remainingMortgageBalance, generateAmortizationSchedule, datesToPeriods, type CalcInput, type PaymentFrequency } from "@/lib/calculations";
 import { getRecommendation } from "@/lib/claude";
 import type {
   AssessmentInput,
@@ -68,13 +68,52 @@ export async function POST(request: Request) {
 
     const financials = calculateFinancials(calcInput);
 
-    // Generate amortization schedule from remaining balance
+    // Parse lump sum payments
+    const rawLumpSums = Array.isArray(body.lumpSums) ? body.lumpSums as { amount: string; date: string }[] : [];
+    const parsedLumpSums = rawLumpSums
+      .filter((ls) => ls.amount && ls.date)
+      .map((ls) => ({ amount: Number(ls.amount), date: String(ls.date) }))
+      .filter((ls) => ls.amount > 0);
+
+    // Convert dated lump sums to period-indexed
+    const scheduleStartDate = new Date();
+    const lumpSumPeriods = datesToPeriods(parsedLumpSums, scheduleStartDate, calcInput.paymentFrequency);
+
+    // Generate amortization schedule at actual payment frequency
     const amortizationSchedule = generateAmortizationSchedule(
       calcInput.mortgageBalance,
       calcInput.mortgageRate,
-      calcInput.amortizationYearsRemaining * 12
+      calcInput.amortizationYearsRemaining,
+      calcInput.paymentFrequency,
+      lumpSumPeriods
     );
-    const financialsWithSchedule = { ...financials, amortizationSchedule };
+
+    // Also generate schedule without lump sums to show savings
+    const hasLumpSums = lumpSumPeriods.length > 0;
+    const scheduleWithoutLump = hasLumpSums
+      ? generateAmortizationSchedule(
+          calcInput.mortgageBalance,
+          calcInput.mortgageRate,
+          calcInput.amortizationYearsRemaining,
+          calcInput.paymentFrequency
+        )
+      : null;
+
+    const lumpSumSavings = scheduleWithoutLump ? {
+      interestSaved: Math.round(
+        scheduleWithoutLump.reduce((s, e) => s + e.interest, 0) -
+        amortizationSchedule.reduce((s, e) => s + e.interest, 0)
+      ),
+      paymentsSaved: scheduleWithoutLump.length - amortizationSchedule.length,
+      totalLumpSum: parsedLumpSums.reduce((s, ls) => s + ls.amount, 0),
+    } : null;
+
+    const financialsWithSchedule = {
+      ...financials,
+      amortizationSchedule,
+      paymentFrequency: calcInput.paymentFrequency,
+      lumpSumSavings,
+    };
 
     // 3. Save initial assessment to Supabase
     const { data: assessment, error: assessError } = await getSupabase()
@@ -199,11 +238,6 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
   const mortgageRate = Number(body.mortgageRate);
   const currentYear = new Date().getFullYear();
   const yearsSincePurchase = Math.max(0, currentYear - purchaseYear);
-  const paymentsMade = yearsSincePurchase * 12;
-  const totalAmortizationMonths = amortizationYearsTotal * 12;
-  const mortgageBalance = remainingMortgageBalance(
-    originalMortgage, mortgageRate, totalAmortizationMonths, paymentsMade
-  );
   const amortizationYearsRemaining = Math.max(0, amortizationYearsTotal - yearsSincePurchase);
 
   // Map form mortgage type to our type
@@ -253,6 +287,16 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
     "Within 1 year": "6-12 months",
     "Just exploring options": "just curious",
   };
+
+  // Calculate remaining balance using actual payment frequency
+  const freq = paymentFrequencyMap[String(body.paymentFrequency)] ?? "monthly" as PaymentFrequency;
+  const paymentsMade = yearsSincePurchase * (
+    freq === "weekly" || freq === "accelerated-weekly" ? 52 :
+    freq === "bi-weekly" || freq === "accelerated-bi-weekly" ? 26 : 12
+  );
+  const mortgageBalance = remainingMortgageBalance(
+    originalMortgage, mortgageRate, amortizationYearsTotal, paymentsMade, freq
+  );
 
   return {
     lead: {

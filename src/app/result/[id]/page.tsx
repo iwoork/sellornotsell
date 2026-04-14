@@ -271,7 +271,11 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
 
           {/* Amortization schedule */}
           {financials.amortizationSchedule && financials.amortizationSchedule.length > 0 && (
-            <AmortizationSchedule schedule={financials.amortizationSchedule} />
+            <AmortizationSchedule
+              schedule={financials.amortizationSchedule}
+              paymentFrequency={(financials as unknown as Record<string, unknown>).paymentFrequency as string}
+              lumpSumSavings={(financials as unknown as Record<string, unknown>).lumpSumSavings as { interestSaved: number; paymentsSaved: number; totalLumpSum: number } | null}
+            />
           )}
 
           {/* SearchStrata cross-sell */}

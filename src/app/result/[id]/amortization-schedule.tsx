@@ -10,19 +10,53 @@ interface ScheduleEntry {
   balance: number;
 }
 
+type Freq = "monthly" | "bi-weekly" | "accelerated-bi-weekly" | "weekly" | "accelerated-weekly";
+
+const FREQ_LABELS: Record<Freq, string> = {
+  monthly: "Month",
+  "bi-weekly": "Period",
+  "accelerated-bi-weekly": "Period",
+  weekly: "Week",
+  "accelerated-weekly": "Week",
+};
+
+function periodsPerYear(freq: Freq): number {
+  if (freq === "weekly" || freq === "accelerated-weekly") return 52;
+  if (freq === "bi-weekly" || freq === "accelerated-bi-weekly") return 26;
+  return 12;
+}
+
 function fmt(n: number): string {
   return n.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
 }
 
-export function AmortizationSchedule({ schedule }: { schedule: ScheduleEntry[] }) {
-  const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"yearly" | "monthly">("yearly");
+interface LumpSumSavings {
+  interestSaved: number;
+  paymentsSaved: number;
+  totalLumpSum: number;
+}
 
-  // Group by year for yearly view
+export function AmortizationSchedule({
+  schedule,
+  paymentFrequency = "monthly",
+  lumpSumSavings,
+}: {
+  schedule: ScheduleEntry[];
+  paymentFrequency?: string;
+  lumpSumSavings?: LumpSumSavings | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState<"yearly" | "per-payment">("yearly");
+
+  const freq = (paymentFrequency || "monthly") as Freq;
+  const ppy = periodsPerYear(freq);
+  const periodLabel = FREQ_LABELS[freq] || "Period";
+
+  // Group by year
   const yearly = [];
-  for (let i = 0; i < schedule.length; i += 12) {
-    const yearEntries = schedule.slice(i, i + 12);
-    const year = Math.floor(i / 12) + 1;
+  for (let i = 0; i < schedule.length; i += ppy) {
+    const yearEntries = schedule.slice(i, i + ppy);
+    const year = Math.floor(i / ppy) + 1;
     yearly.push({
       year,
       payment: yearEntries.reduce((s, e) => s + e.payment, 0),
@@ -70,24 +104,53 @@ export function AmortizationSchedule({ schedule }: { schedule: ScheduleEntry[] }
             </button>
             <button
               type="button"
-              onClick={() => setView("monthly")}
+              onClick={() => setView("per-payment")}
               className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                view === "monthly"
+                view === "per-payment"
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted hover:text-foreground"
               }`}
             >
-              Monthly
+              Per Payment
             </button>
           </div>
 
+          {/* Summary */}
+          <div className="flex flex-wrap gap-4 text-xs text-muted">
+            <span>
+              {schedule.length} payments remaining
+            </span>
+            <span>
+              Total interest: {fmt(schedule.reduce((s, e) => s + e.interest, 0))}
+            </span>
+          </div>
+
+          {/* Lump sum savings */}
+          {lumpSumSavings && lumpSumSavings.interestSaved > 0 && (
+            <div className="rounded-xl bg-hold-light p-4 text-sm">
+              <p className="font-semibold text-hold">
+                Lump sum payments totalling {fmt(lumpSumSavings.totalLumpSum)} save you:
+              </p>
+              <div className="mt-2 flex flex-wrap gap-6 text-xs">
+                <div>
+                  <span className="font-bold text-hold text-base">{fmt(lumpSumSavings.interestSaved)}</span>
+                  <span className="text-muted ml-1">in interest</span>
+                </div>
+                <div>
+                  <span className="font-bold text-hold text-base">{lumpSumSavings.paymentsSaved}</span>
+                  <span className="text-muted ml-1">fewer payments</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <div className="overflow-x-auto rounded-xl border border-border bg-card max-h-[28rem] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr className="border-b border-border bg-surface text-xs text-muted">
                   <th className="px-4 py-2.5 text-left font-medium">
-                    {view === "yearly" ? "Year" : "Month"}
+                    {view === "yearly" ? "Year" : periodLabel}
                   </th>
                   <th className="px-4 py-2.5 text-right font-medium">Payment</th>
                   <th className="px-4 py-2.5 text-right font-medium">Principal</th>
@@ -112,8 +175,8 @@ export function AmortizationSchedule({ schedule }: { schedule: ScheduleEntry[] }
                   );
                 })}
               </tbody>
-              <tfoot>
-                <tr className="bg-surface">
+              <tfoot className="sticky bottom-0">
+                <tr className="bg-surface border-t border-border">
                   <td className="px-4 py-2.5 font-semibold text-foreground">Total</td>
                   <td className="px-4 py-2.5 text-right font-semibold text-foreground">
                     {fmt(schedule.reduce((s, e) => s + e.payment, 0))}

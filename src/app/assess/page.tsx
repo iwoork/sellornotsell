@@ -66,6 +66,7 @@ type FormData = {
   mortgageRate: string;
   mortgageType: string;
   paymentFrequency: string;
+  lumpSums: { amount: string; date: string }[];
   annualPropertyTax: string;
   // Step 3: About you
   sellingReason: string;
@@ -94,6 +95,7 @@ const INITIAL_FORM: FormData = {
   mortgageRate: "",
   mortgageType: "",
   paymentFrequency: "",
+  lumpSums: [],
   annualPropertyTax: "",
   sellingReason: "",
   timeline: "",
@@ -511,6 +513,71 @@ function Step2({ form, update }: { form: FormData; update: (patch: Partial<FormD
         <Select id="mortgageType" label="Mortgage Type" value={form.mortgageType} onChange={(v) => update({ mortgageType: v })} options={MORTGAGE_TYPES} placeholder="Select type" />
       </div>
       <Select id="paymentFrequency" label="Payment Frequency" value={form.paymentFrequency} onChange={(v) => update({ paymentFrequency: v })} options={PAYMENT_FREQUENCIES} placeholder="Select frequency" />
+
+      {/* Lump sum payments */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-sm font-medium text-foreground">Lump Sum Payments (optional)</label>
+          <button
+            type="button"
+            onClick={() => update({ lumpSums: [...form.lumpSums, { amount: "", date: "" }] })}
+            className="text-xs font-medium text-primary hover:text-primary-hover transition-colors"
+          >
+            + Add lump sum
+          </button>
+        </div>
+        {form.lumpSums.length === 0 && (
+          <p className="text-xs text-muted">Add any past or planned lump sum payments to see their impact on your amortization.</p>
+        )}
+        {form.lumpSums.map((ls, i) => (
+          <div key={i} className="mt-2 flex gap-2 items-end">
+            <div className="flex-1">
+              {i === 0 && <label className="block text-xs text-muted mb-1">Amount</label>}
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="10,000"
+                  value={ls.amount ? formatWithCommas(ls.amount) : ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^\d.]/g, "");
+                    const next = [...form.lumpSums];
+                    next[i] = { ...next[i], amount: raw };
+                    update({ lumpSums: next });
+                  }}
+                  className="block w-full rounded-xl border border-border bg-card py-2.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow"
+                />
+              </div>
+            </div>
+            <div className="flex-1">
+              {i === 0 && <label className="block text-xs text-muted mb-1">Date</label>}
+              <input
+                type="date"
+                value={ls.date}
+                onChange={(e) => {
+                  const next = [...form.lumpSums];
+                  next[i] = { ...next[i], date: e.target.value };
+                  update({ lumpSums: next });
+                }}
+                className="block w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = form.lumpSums.filter((_, j) => j !== i);
+                update({ lumpSums: next });
+              }}
+              className="shrink-0 rounded-lg p-2 text-muted hover:text-sell hover:bg-surface transition-colors"
+              aria-label="Remove lump sum"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+        ))}
+      </div>
+
       <Input id="annualPropertyTax" label="Annual Property Tax" type="number" value={form.annualPropertyTax} onChange={(v) => update({ annualPropertyTax: v })} placeholder="4,500" prefix="$" />
     </div>
   );

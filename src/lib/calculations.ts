@@ -46,33 +46,81 @@ export function monthlyMortgagePayment(
   return numerator / denominator;
 }
 
-/** Calculate remaining mortgage balance after N payments */
+/** Number of payments per year for each frequency */
+function paymentsPerYear(freq: PaymentFrequency): number {
+  switch (freq) {
+    case "weekly":
+    case "accelerated-weekly": return 52;
+    case "bi-weekly":
+    case "accelerated-bi-weekly": return 26;
+    case "monthly":
+    default: return 12;
+  }
+}
+
+/**
+ * Effective per-period interest rate for Canadian mortgages.
+ * Canadian mortgages compound semi-annually regardless of payment frequency.
+ */
+function effectivePerPeriodRate(annualRate: number, freq: PaymentFrequency): number {
+  if (annualRate <= 0) return 0;
+  const semiAnnualRate = annualRate / 100 / 2;
+  const periodsPerHalfYear = paymentsPerYear(freq) / 2;
+  return Math.pow(1 + semiAnnualRate, 1 / periodsPerHalfYear) - 1;
+}
+
+/**
+ * Per-period payment amount based on frequency.
+ * Accelerated: monthly payment ÷ divisor (2 for bi-weekly, 4 for weekly).
+ * Non-accelerated: recalculated for the frequency to keep the same total amortization period.
+ */
+export function perPeriodPayment(
+  balance: number,
+  annualRate: number,
+  amortizationYears: number,
+  freq: PaymentFrequency
+): number {
+  if (balance <= 0 || amortizationYears <= 0) return 0;
+
+  if (freq === "accelerated-bi-weekly") {
+    return monthlyMortgagePayment(balance, annualRate, amortizationYears * 12) / 2;
+  }
+  if (freq === "accelerated-weekly") {
+    return monthlyMortgagePayment(balance, annualRate, amortizationYears * 12) / 4;
+  }
+
+  // Non-accelerated: compute payment for the actual number of periods
+  const r = effectivePerPeriodRate(annualRate, freq);
+  const n = paymentsPerYear(freq) * amortizationYears;
+  if (r <= 0) return balance / n;
+  return (balance * r) / (1 - Math.pow(1 + r, -n));
+}
+
+/** Calculate remaining mortgage balance after N periods at the given frequency */
 export function remainingMortgageBalance(
   originalBalance: number,
   annualRate: number,
-  totalAmortizationMonths: number,
-  paymentsMade: number
+  amortizationYears: number,
+  paymentsMade: number,
+  freq: PaymentFrequency = "monthly"
 ): number {
-  if (originalBalance <= 0 || totalAmortizationMonths <= 0) return 0;
-  if (paymentsMade >= totalAmortizationMonths) return 0;
-  if (annualRate <= 0) {
-    // Simple case: no interest
-    const perPayment = originalBalance / totalAmortizationMonths;
-    return Math.max(0, originalBalance - perPayment * paymentsMade);
-  }
+  if (originalBalance <= 0 || amortizationYears <= 0) return 0;
 
-  const semiAnnualRate = annualRate / 100 / 2;
-  const r = Math.pow(1 + semiAnnualRate, 1 / 6) - 1;
-  // Balance after n payments: B = P(1+r)^n - M[((1+r)^n - 1)/r]
-  const monthlyPayment = monthlyMortgagePayment(originalBalance, annualRate, totalAmortizationMonths);
+  const r = effectivePerPeriodRate(annualRate, freq);
+  const payment = perPeriodPayment(originalBalance, annualRate, amortizationYears, freq);
+  const totalPeriods = paymentsPerYear(freq) * amortizationYears;
+
+  if (paymentsMade >= totalPeriods) return 0;
+  if (r <= 0) return Math.max(0, originalBalance - payment * paymentsMade);
+
   const compounded = Math.pow(1 + r, paymentsMade);
-  const balance = originalBalance * compounded - monthlyPayment * ((compounded - 1) / r);
+  const balance = originalBalance * compounded - payment * ((compounded - 1) / r);
   return Math.max(0, Math.round(balance));
 }
 
 /**
- * Generate a full amortization schedule.
- * Returns one entry per payment period (monthly).
+ * Generate a full amortization schedule at the actual payment frequency.
+ * Each entry represents one real payment (monthly, bi-weekly, or weekly).
  */
 export interface AmortizationEntry {
   period: number;
@@ -82,29 +130,78 @@ export interface AmortizationEntry {
   balance: number;
 }
 
+export interface LumpSumPayment {
+  amount: number;
+  /** Period number (1-based) at which the lump sum is applied */
+  period: number;
+}
+
+/**
+ * Convert dated lump sums to period-indexed lump sums.
+ * Period 1 starts at `startDate`, each period is `daysPerPeriod` long.
+ */
+export function datesToPeriods(
+  lumpSums: { amount: number; date: string }[],
+  startDate: Date,
+  freq: PaymentFrequency
+): LumpSumPayment[] {
+  const daysPerPeriod = freq === "weekly" || freq === "accelerated-weekly" ? 7 : freq === "bi-weekly" || freq === "accelerated-bi-weekly" ? 14 : 30.44;
+
+  return lumpSums
+    .filter((ls) => ls.amount > 0 && ls.date)
+    .map((ls) => {
+      const d = new Date(ls.date);
+      const diffMs = d.getTime() - startDate.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      const period = Math.max(1, Math.ceil(diffDays / daysPerPeriod));
+      return { amount: ls.amount, period };
+    })
+    .sort((a, b) => a.period - b.period);
+}
+
 export function generateAmortizationSchedule(
   originalBalance: number,
   annualRate: number,
-  totalAmortizationMonths: number
+  amortizationYears: number,
+  freq: PaymentFrequency = "monthly",
+  lumpSums: LumpSumPayment[] = []
 ): AmortizationEntry[] {
-  if (originalBalance <= 0 || totalAmortizationMonths <= 0) return [];
+  if (originalBalance <= 0 || amortizationYears <= 0) return [];
 
-  const semiAnnualRate = annualRate / 100 / 2;
-  const r = annualRate <= 0 ? 0 : Math.pow(1 + semiAnnualRate, 1 / 6) - 1;
-  const payment = monthlyMortgagePayment(originalBalance, annualRate, totalAmortizationMonths);
+  const r = effectivePerPeriodRate(annualRate, freq);
+  const payment = perPeriodPayment(originalBalance, annualRate, amortizationYears, freq);
+  const maxPeriods = paymentsPerYear(freq) * amortizationYears;
   const schedule: AmortizationEntry[] = [];
   let balance = originalBalance;
 
-  for (let i = 1; i <= totalAmortizationMonths && balance > 0; i++) {
+  // Index lump sums by period for O(1) lookup
+  const lumpByPeriod = new Map<number, number>();
+  for (const ls of lumpSums) {
+    lumpByPeriod.set(ls.period, (lumpByPeriod.get(ls.period) || 0) + ls.amount);
+  }
+
+  for (let i = 1; i <= maxPeriods && balance > 0.5; i++) {
     const interest = balance * r;
-    const principal = Math.min(payment - interest, balance);
+    let periodPayment = Math.min(payment, balance + interest);
+    let principal = periodPayment - interest;
+
+    // Apply lump sum if one falls on this period
+    const lump = lumpByPeriod.get(i);
+    if (lump && lump > 0) {
+      const lumpApplied = Math.min(lump, balance - principal);
+      if (lumpApplied > 0) {
+        principal += lumpApplied;
+        periodPayment += lumpApplied;
+      }
+    }
+
     balance = Math.max(0, balance - principal);
     schedule.push({
       period: i,
-      payment: Math.round(payment),
-      principal: Math.round(principal),
-      interest: Math.round(interest),
-      balance: Math.round(balance),
+      payment: Math.round(periodPayment * 100) / 100,
+      principal: Math.round(principal * 100) / 100,
+      interest: Math.round(interest * 100) / 100,
+      balance: Math.round(balance * 100) / 100,
     });
   }
 
@@ -274,49 +371,16 @@ export interface CarryingCosts {
   total: number;
 }
 
-/**
- * Convert a per-payment mortgage amount to a monthly equivalent based on frequency.
- *
- * - Monthly: 1 payment/month (12/year)
- * - Bi-weekly: payment = monthly / 2, 26 payments/year → monthly equiv = payment × 26 / 12
- * - Accelerated bi-weekly: payment = monthly / 2, 26 payments/year (pays off faster)
- * - Weekly: payment = monthly / 4, 52 payments/year → monthly equiv = payment × 52 / 12
- * - Accelerated weekly: payment = monthly / 4, 52 payments/year (pays off faster)
- *
- * For accelerated schedules, the per-payment amount equals the non-accelerated amount
- * but there are more payments per year, so the monthly cost is higher.
- */
+/** Convert per-period payment to monthly equivalent for carrying cost display */
 function mortgageMonthlyEquivalent(
   balance: number,
   annualRate: number,
   amortizationYearsRemaining: number,
   frequency: PaymentFrequency
 ): number {
-  // Base monthly payment
-  const monthly = monthlyMortgagePayment(
-    balance,
-    annualRate,
-    amortizationYearsRemaining * 12
-  );
-
-  switch (frequency) {
-    case "monthly":
-      return monthly;
-    case "bi-weekly":
-      // 26 payments/year, each = annual cost / 26
-      return (monthly * 12) / 12; // same annual cost, same monthly equiv
-    case "accelerated-bi-weekly":
-      // payment = monthly / 2, but 26 payments/year → annual = monthly/2 × 26 = monthly × 13
-      return (monthly * 13) / 12;
-    case "weekly":
-      // 52 payments/year, each = annual cost / 52
-      return (monthly * 12) / 12; // same annual cost
-    case "accelerated-weekly":
-      // payment = monthly / 4, but 52 payments/year → annual = monthly/4 × 52 = monthly × 13
-      return (monthly * 13) / 12;
-    default:
-      return monthly;
-  }
+  const payment = perPeriodPayment(balance, annualRate, amortizationYearsRemaining, frequency);
+  const ppy = paymentsPerYear(frequency);
+  return (payment * ppy) / 12;
 }
 
 export function calculateMonthlyCarryingCosts(
