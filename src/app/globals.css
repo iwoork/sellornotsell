@@ -110,6 +110,23 @@ html {
 .places-autocomplete-wrapper gmp-place-autocomplete {
   width: 100%;
   display: block;
+  background: transparent;
+  --gmp-color-surface: var(--card);
+  --gmp-color-on-surface: var(--foreground);
+  --gmp-color-on-surface-variant: var(--muted);
+  --gmp-color-primary: var(--primary);
+  --gmp-color-outline: var(--border);
+  color-scheme: light;
+}
+
+.dark .places-autocomplete-wrapper gmp-place-autocomplete {
+  color-scheme: dark;
+}
+
+/* Reset the web component's container backgrounds */
+.places-autocomplete-wrapper gmp-place-autocomplete::part(container),
+.places-autocomplete-wrapper gmp-place-autocomplete::part(base) {
+  background: transparent;
 }
 
 /* Match the input to the same design as Input/Select components:
