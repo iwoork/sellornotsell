@@ -509,8 +509,8 @@ export default function AssessPage() {
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
               <rect width="32" height="32" rx="8" fill="#0f766e"/>
-              <path d="M20.5 9H14a3.5 3.5 0 0 0 0 7h4a3.5 3.5 0 0 1 0 7H11.5" stroke="white" strokeWidth="2.6" strokeLinecap="round" fill="none"/>
-              <path d="M18 9l2.5-2.8L23 9" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M6 19L16 9l10 10" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <circle cx="16" cy="25" r="2.2" fill="white"/>
             </svg>
             <span>
               <span className="text-primary">Sell</span>
