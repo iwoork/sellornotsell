@@ -240,19 +240,19 @@ declare global {
 
 function PlacesAutocomplete({
   value,
+  province,
   onSelect,
+  onClear,
 }: {
   value: string;
+  province: string;
   onSelect: (city: string, province: string) => void;
+  onClear: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const elementRef = useRef<any>(null);
-  const [selected, setSelected] = useState(!!value);
-
-  useEffect(() => {
-    setSelected(!!value);
-  }, [value]);
+  const [mountKey, setMountKey] = useState(0);
 
   const initAutocomplete = useCallback(async () => {
     if (!window.google?.maps || elementRef.current || !containerRef.current) return;
@@ -279,7 +279,7 @@ function PlacesAutocomplete({
       if (!components) return;
 
       let city = "";
-      let province = "";
+      let prov = "";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const comp of components as any[]) {
@@ -289,13 +289,12 @@ function PlacesAutocomplete({
         } else if (types.includes("sublocality_level_1") && !city) {
           city = comp.longText ?? comp.long_name;
         } else if (types.includes("administrative_area_level_1")) {
-          province = PROVINCE_MAP[comp.shortText ?? comp.short_name] || comp.longText || comp.long_name;
+          prov = PROVINCE_MAP[comp.shortText ?? comp.short_name] || comp.longText || comp.long_name;
         }
       }
 
       if (city) {
-        setSelected(true);
-        onSelect(city, province);
+        onSelect(city, prov);
       }
     });
 
@@ -320,19 +319,43 @@ function PlacesAutocomplete({
     return () => clearInterval(interval);
   }, [initAutocomplete]);
 
+  const hasSelection = !!(value && province);
+
   return (
-    <div className="sm:col-span-2">
-      <label className="block text-sm font-medium text-foreground mb-1.5">
-        City
-      </label>
-      <div
-        ref={containerRef}
-        className="places-autocomplete-wrapper"
-      />
-      {selected && value && (
-        <p className="mt-1 text-xs text-primary">{value}</p>
-      )}
-    </div>
+    <>
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1.5">
+          City
+        </label>
+        {hasSelection ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground">
+            <span className="flex-1 truncate">{value}</span>
+            <button
+              type="button"
+              onClick={() => { elementRef.current = null; setMountKey((k) => k + 1); onClear(); }}
+              className="shrink-0 rounded-lg p-0.5 text-muted hover:text-foreground hover:bg-surface transition-colors"
+              aria-label="Change city"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+        ) : (
+          <div
+            key={mountKey}
+            ref={containerRef}
+            className="places-autocomplete-wrapper"
+          />
+        )}
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1.5">
+          Province
+        </label>
+        <div className={`rounded-xl border border-border px-4 py-3 text-sm ${hasSelection ? "bg-card text-foreground" : "bg-surface text-muted"}`}>
+          {province || "Auto-detected"}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -344,20 +367,19 @@ function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormD
     [update],
   );
 
+  const handlePlaceClear = useCallback(() => {
+    update({ city: "", province: "" });
+  }, [update]);
+
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <PlacesAutocomplete
           value={form.city}
+          province={form.province}
           onSelect={handlePlaceSelect}
+          onClear={handlePlaceClear}
         />
-        {form.province && (
-          <div className="flex items-end">
-            <div className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground">
-              {form.province}
-            </div>
-          </div>
-        )}
       </div>
       <Select id="propertyType" label="Property Type" value={form.propertyType} onChange={(v) => update({ propertyType: v })} options={PROPERTY_TYPES} />
       <div className="grid gap-4 sm:grid-cols-2">
