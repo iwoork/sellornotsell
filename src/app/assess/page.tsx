@@ -40,6 +40,7 @@ const TIMELINES = [
 
 type FormData = {
   // Step 1: Property
+  streetAddress: string;
   city: string;
   province: string;
   propertyType: string;
@@ -64,6 +65,7 @@ type FormData = {
 };
 
 const INITIAL_FORM: FormData = {
+  streetAddress: "",
   city: "",
   province: "",
   propertyType: "",
@@ -239,14 +241,16 @@ declare global {
 }
 
 function PlacesAutocomplete({
-  value,
+  streetAddress,
+  city,
   province,
   onSelect,
   onClear,
 }: {
-  value: string;
+  streetAddress: string;
+  city: string;
   province: string;
-  onSelect: (city: string, province: string) => void;
+  onSelect: (streetAddress: string, city: string, province: string) => void;
   onClear: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -263,7 +267,7 @@ function PlacesAutocomplete({
     if (!PlaceAutocompleteElement) return;
 
     const pac = new PlaceAutocompleteElement({
-      includedPrimaryTypes: ["locality"],
+      includedPrimaryTypes: ["street_address", "subpremise"],
       includedRegionCodes: ["ca"],
     });
 
@@ -278,23 +282,31 @@ function PlacesAutocomplete({
       const components = place.addressComponents;
       if (!components) return;
 
-      let city = "";
+      let streetNumber = "";
+      let route = "";
+      let selectedCity = "";
       let prov = "";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const comp of components as any[]) {
         const types: string[] = comp.types;
-        if (types.includes("locality")) {
-          city = comp.longText ?? comp.long_name;
-        } else if (types.includes("sublocality_level_1") && !city) {
-          city = comp.longText ?? comp.long_name;
+        if (types.includes("street_number")) {
+          streetNumber = comp.longText ?? comp.long_name;
+        } else if (types.includes("route")) {
+          route = comp.longText ?? comp.long_name;
+        } else if (types.includes("locality")) {
+          selectedCity = comp.longText ?? comp.long_name;
+        } else if (types.includes("sublocality_level_1") && !selectedCity) {
+          selectedCity = comp.longText ?? comp.long_name;
         } else if (types.includes("administrative_area_level_1")) {
           prov = PROVINCE_MAP[comp.shortText ?? comp.short_name] || comp.longText || comp.long_name;
         }
       }
 
-      if (city) {
-        onSelect(city, prov);
+      const street = [streetNumber, route].filter(Boolean).join(" ");
+
+      if (selectedCity) {
+        onSelect(street, selectedCity, prov);
       }
     });
 
@@ -319,22 +331,24 @@ function PlacesAutocomplete({
     return () => clearInterval(interval);
   }, [initAutocomplete]);
 
-  const hasSelection = !!(value && province);
+  const hasSelection = !!(city && province);
 
   return (
     <>
-      <div>
+      <div className="sm:col-span-2">
         <label className="block text-sm font-medium text-foreground mb-1.5">
-          City
+          Property Address
         </label>
         {hasSelection ? (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground">
-            <span className="flex-1 truncate">{value}</span>
+            <span className="flex-1 truncate">
+              {[streetAddress, city, province].filter(Boolean).join(", ")}
+            </span>
             <button
               type="button"
               onClick={() => { elementRef.current = null; setMountKey((k) => k + 1); onClear(); }}
               className="shrink-0 rounded-lg p-0.5 text-muted hover:text-foreground hover:bg-surface transition-colors"
-              aria-label="Change city"
+              aria-label="Change address"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
@@ -347,14 +361,6 @@ function PlacesAutocomplete({
           />
         )}
       </div>
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">
-          Province
-        </label>
-        <div className={`rounded-xl border border-border px-4 py-3 text-sm ${hasSelection ? "bg-card text-foreground" : "bg-surface text-muted"}`}>
-          {province || "Auto-detected"}
-        </div>
-      </div>
     </>
   );
 }
@@ -363,29 +369,32 @@ function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormD
   const [assessedHint, setAssessedHint] = useState<string | null>(null);
 
   const handlePlaceSelect = useCallback(
-    async (city: string, province: string) => {
-      update({ city, province });
+    async (streetAddress: string, city: string, province: string) => {
+      update({ streetAddress, city, province });
       setAssessedHint(null);
+
+      if (!streetAddress) return;
 
       // Try to prefill estimated value from BC Assessment data
       try {
-        const res = await fetch(`/api/assessed-value?city=${encodeURIComponent(city)}`);
+        const params = new URLSearchParams({ address: streetAddress, city });
+        const res = await fetch(`/api/assessed-value?${params}`);
         if (res.ok) {
           const { assessedValue } = await res.json();
-          if (assessedValue && !form.estimatedCurrentValue) {
+          if (assessedValue) {
             update({ estimatedCurrentValue: String(assessedValue) });
-            setAssessedHint(`Pre-filled from BC Assessment avg (${assessedValue.toLocaleString("en-CA")})`);
+            setAssessedHint(`Pre-filled from BC Assessment ($${Number(assessedValue).toLocaleString("en-CA")})`);
           }
         }
       } catch {
         // Silently fail — user can still enter manually
       }
     },
-    [update, form.estimatedCurrentValue],
+    [update],
   );
 
   const handlePlaceClear = useCallback(() => {
-    update({ city: "", province: "" });
+    update({ streetAddress: "", city: "", province: "" });
     setAssessedHint(null);
   }, [update]);
 
@@ -393,7 +402,8 @@ function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormD
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <PlacesAutocomplete
-          value={form.city}
+          streetAddress={form.streetAddress}
+          city={form.city}
           province={form.province}
           onSelect={handlePlaceSelect}
           onClear={handlePlaceClear}
@@ -512,7 +522,7 @@ export default function AssessPage() {
   const canAdvance = (): boolean => {
     switch (step) {
       case 0:
-        return !!(form.city && form.province && form.propertyType && form.bedrooms && form.bathrooms && form.estimatedCurrentValue);
+        return !!(form.streetAddress && form.city && form.province && form.propertyType && form.bedrooms && form.bathrooms && form.estimatedCurrentValue);
       case 1:
         return !!(form.purchasePrice && form.purchaseYear && form.currentMortgageBalance && form.mortgageRate && form.mortgageType && form.annualPropertyTax);
       case 2:
