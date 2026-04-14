@@ -92,23 +92,34 @@ function AdditionalMetrics({ financials }: { financials: FinancialBreakdown }) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <div className="rounded-xl border border-border bg-card p-4 text-center">
-        <div className="text-xs text-muted">Monthly Carrying Cost</div>
+        <div className="text-xs font-medium text-muted">Monthly Carrying Cost</div>
         <div className="mt-1.5 text-lg font-bold text-foreground">
           <MoneyCell value={financials.monthlyCarryingCost} />
           <span className="text-xs font-normal text-muted">/mo</span>
         </div>
+        <p className="mt-2 text-[11px] leading-snug text-muted">
+          Mortgage payment, property tax, insurance, and maintenance combined
+        </p>
       </div>
       <div className="rounded-xl border border-border bg-card p-4 text-center">
-        <div className="text-xs text-muted">Total Selling Costs</div>
+        <div className="text-xs font-medium text-muted">Total Selling Costs</div>
         <div className="mt-1.5 text-lg font-bold text-sell">
           <MoneyCell value={financials.sellingCosts.total} />
         </div>
+        <p className="mt-2 text-[11px] leading-snug text-muted">
+          Agent commission, legal fees, mortgage penalty, and closing costs if you sell today
+        </p>
       </div>
       <div className="rounded-xl border border-border bg-card p-4 text-center">
-        <div className="text-xs text-muted">Break-Even</div>
+        <div className="text-xs font-medium text-muted">Break-Even</div>
         <div className="mt-1.5 text-lg font-bold text-foreground">
           {financials.breakEvenMonths ? `${financials.breakEvenMonths} mo` : "N/A"}
         </div>
+        <p className="mt-2 text-[11px] leading-snug text-muted">
+          {financials.breakEvenMonths
+            ? "Months of holding needed for appreciation to cover your selling costs"
+            : "Market conditions don\u2019t support a break-even timeline"}
+        </p>
       </div>
     </div>
   );
