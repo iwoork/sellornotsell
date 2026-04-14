@@ -41,6 +41,7 @@ const TIMELINES = [
 type FormData = {
   // Step 1: Property
   streetAddress: string;
+  unit: string;
   city: string;
   province: string;
   propertyType: string;
@@ -66,6 +67,7 @@ type FormData = {
 
 const INITIAL_FORM: FormData = {
   streetAddress: "",
+  unit: "",
   city: "",
   province: "",
   propertyType: "",
@@ -365,38 +367,71 @@ function PlacesAutocomplete({
   );
 }
 
+function fetchAssessedValue(
+  streetAddress: string,
+  city: string,
+  unit?: string,
+): Promise<number | null> {
+  const params = new URLSearchParams({ address: streetAddress, city });
+  if (unit) params.set("unit", unit);
+  return fetch(`/api/assessed-value?${params}`)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((json) => json?.assessedValue ?? null)
+    .catch(() => null);
+}
+
+const CONDO_TYPES = new Set(["Condo / Apartment", "Duplex / Triplex"]);
+
 function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormData>) => void }) {
   const [assessedHint, setAssessedHint] = useState<string | null>(null);
+  const [loadingAssessment, setLoadingAssessment] = useState(false);
+  const showUnit = !!(form.streetAddress && form.city && CONDO_TYPES.has(form.propertyType));
 
-  const handlePlaceSelect = useCallback(
-    async (streetAddress: string, city: string, province: string) => {
-      update({ streetAddress, city, province });
-      setAssessedHint(null);
-
+  const applyAssessedValue = useCallback(
+    async (streetAddress: string, city: string, unit?: string) => {
       if (!streetAddress) return;
-
-      // Try to prefill estimated value from BC Assessment data
-      try {
-        const params = new URLSearchParams({ address: streetAddress, city });
-        const res = await fetch(`/api/assessed-value?${params}`);
-        if (res.ok) {
-          const { assessedValue } = await res.json();
-          if (assessedValue) {
-            update({ estimatedCurrentValue: String(assessedValue) });
-            setAssessedHint(`Pre-filled from BC Assessment ($${Number(assessedValue).toLocaleString("en-CA")})`);
-          }
-        }
-      } catch {
-        // Silently fail — user can still enter manually
+      setLoadingAssessment(true);
+      setAssessedHint(null);
+      const val = await fetchAssessedValue(streetAddress, city, unit);
+      setLoadingAssessment(false);
+      if (val) {
+        update({ estimatedCurrentValue: String(val) });
+        setAssessedHint(`Pre-filled from BC Assessment ($${Number(val).toLocaleString("en-CA")})`);
       }
     },
     [update],
   );
 
+  const handlePlaceSelect = useCallback(
+    async (streetAddress: string, city: string, province: string) => {
+      update({ streetAddress, city, province, unit: "" });
+      setAssessedHint(null);
+      // For non-condo types, look up without unit
+      await applyAssessedValue(streetAddress, city);
+    },
+    [update, applyAssessedValue],
+  );
+
   const handlePlaceClear = useCallback(() => {
-    update({ streetAddress: "", city: "", province: "" });
+    update({ streetAddress: "", unit: "", city: "", province: "" });
     setAssessedHint(null);
   }, [update]);
+
+  // Re-fetch assessed value when unit changes (debounced)
+  const unitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleUnitChange = useCallback(
+    (unit: string) => {
+      update({ unit });
+      setAssessedHint(null);
+      if (unitTimerRef.current) clearTimeout(unitTimerRef.current);
+      if (unit && form.streetAddress && form.city) {
+        unitTimerRef.current = setTimeout(() => {
+          applyAssessedValue(form.streetAddress, form.city, unit);
+        }, 500);
+      }
+    },
+    [update, form.streetAddress, form.city, applyAssessedValue],
+  );
 
   return (
     <div className="space-y-5">
@@ -409,14 +444,30 @@ function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormD
           onClear={handlePlaceClear}
         />
       </div>
-      <Select id="propertyType" label="Property Type" value={form.propertyType} onChange={(v) => update({ propertyType: v })} options={PROPERTY_TYPES} />
+      <Select id="propertyType" label="Property Type" value={form.propertyType} onChange={(v) => {
+        update({ propertyType: v });
+        // If switching to condo type with an address already set, clear assessed hint (user needs to enter unit)
+        if (CONDO_TYPES.has(v) && form.streetAddress) {
+          setAssessedHint(null);
+        }
+        // If switching away from condo, re-fetch without unit
+        if (!CONDO_TYPES.has(v) && form.streetAddress && form.city) {
+          applyAssessedValue(form.streetAddress, form.city);
+        }
+      }} options={PROPERTY_TYPES} />
+      {showUnit && (
+        <Input id="unit" label="Unit / Suite Number" value={form.unit} onChange={handleUnitChange} placeholder="e.g. 510" />
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Input id="bedrooms" label="Bedrooms" type="number" value={form.bedrooms} onChange={(v) => update({ bedrooms: v })} placeholder="3" />
         <Input id="bathrooms" label="Bathrooms" type="number" value={form.bathrooms} onChange={(v) => update({ bathrooms: v })} placeholder="2" />
       </div>
       <div>
         <Input id="estimatedCurrentValue" label="Estimated Market Value" type="number" value={form.estimatedCurrentValue} onChange={(v) => { update({ estimatedCurrentValue: v }); setAssessedHint(null); }} placeholder="650,000" prefix="$" />
-        {assessedHint && (
+        {loadingAssessment && (
+          <p className="mt-1 text-xs text-muted">Looking up BC Assessment value...</p>
+        )}
+        {assessedHint && !loadingAssessment && (
           <p className="mt-1 text-xs text-primary">{assessedHint}</p>
         )}
       </div>
