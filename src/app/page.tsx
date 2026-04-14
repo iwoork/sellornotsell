@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ThemeToggle } from "./theme-toggle";
 
 export const metadata: Metadata = {
   alternates: { canonical: "https://sellornotsell.com" },
@@ -134,12 +135,15 @@ function Header() {
             <span className="text-foreground">NotSell</span>
           </span>
         </Link>
-        <Link
-          href="/assess"
-          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-        >
-          Get Started
-        </Link>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            href="/assess"
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+          >
+            Get Started
+          </Link>
+        </div>
       </div>
     </header>
   );

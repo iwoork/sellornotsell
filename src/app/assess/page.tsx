@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ThemeToggle } from "../theme-toggle";
 
 const PROPERTY_TYPES = [
   "Detached House",
@@ -220,7 +221,7 @@ function Select({
         className="block w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow appearance-none"
         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
       >
-        <option value="" className="text-gray-300">{placeholder || "Select..."}</option>
+        <option value="" className="text-muted">{placeholder || "Select..."}</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}
@@ -642,6 +643,7 @@ export default function AssessPage() {
               <span className="text-foreground">NotSell</span>
             </span>
           </Link>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -659,7 +661,7 @@ export default function AssessPage() {
               <div className="mt-6">{stepComponents[step]}</div>
 
               {error && (
-                <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-sell">
+                <div className="mt-4 rounded-xl bg-error-bg p-3 text-sm text-sell">
                   {error}
                 </div>
               )}

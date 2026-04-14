@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import type { Metadata } from "next";
 import type { FinancialBreakdown, Verdict, ConfidenceLevel } from "@/lib/types";
+import { ThemeToggle } from "../../theme-toggle";
 
 interface AssessmentData {
   id: string;
@@ -31,7 +32,7 @@ async function getAssessment(id: string): Promise<AssessmentData | null> {
 function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
   const styles = {
     high: "bg-hold-light text-hold",
-    medium: "bg-amber-50 text-amber-700",
+    medium: "bg-warning-bg text-warning-text",
     low: "bg-sell-light text-sell",
   };
   return (
@@ -141,7 +142,7 @@ function CapitalGainsNote({ capitalGains }: { capitalGains: FinancialBreakdown["
   }
   if (capitalGains.estimatedTax > 0) {
     return (
-      <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+      <div className="rounded-xl bg-warning-bg p-4 text-sm text-warning-text">
         <strong>Capital Gains Tax Estimate:</strong> $
         {capitalGains.estimatedTax.toLocaleString()} on a taxable gain of $
         {capitalGains.taxableGain.toLocaleString()}.
@@ -193,12 +194,15 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
               <span className="text-foreground">NotSell</span>
             </span>
           </Link>
-          <Link
-            href="/assess"
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-          >
-            New Assessment
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              href="/assess"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+            >
+              New Assessment
+            </Link>
+          </div>
         </div>
       </header>
 
