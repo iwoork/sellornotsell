@@ -172,10 +172,9 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
-              <rect width="32" height="32" rx="7" fill="#0f766e"/>
-              <path d="M5 16L16 7l11 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M13 20.5a3 3 0 1 1 4.5 2.6c-.6.35-1.5.9-1.5 1.9" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-              <circle cx="16" cy="27.5" r="1.2" fill="white"/>
+              <rect width="32" height="32" rx="8" fill="#0f766e"/>
+              <path d="M20.5 9H14a3.5 3.5 0 0 0 0 7h4a3.5 3.5 0 0 1 0 7H11.5" stroke="white" strokeWidth="2.6" strokeLinecap="round" fill="none"/>
+              <path d="M18 9l2.5-2.8L23 9" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
             </svg>
             <span>
               <span className="text-primary">Sell</span>
