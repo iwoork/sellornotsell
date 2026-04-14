@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { calculateFinancials, type CalcInput } from "@/lib/calculations";
+import { calculateFinancials, type CalcInput, type PaymentFrequency } from "@/lib/calculations";
 import { getRecommendation } from "@/lib/claude";
 import type {
   AssessmentInput,
@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       mortgageBalance: input.purchase.mortgageBalance,
       mortgageRate: input.purchase.mortgageRate,
       mortgageType: input.purchase.mortgageType,
+      paymentFrequency: input.purchase.paymentFrequency as PaymentFrequency,
       amortizationYearsRemaining: input.purchase.amortizationYears,
       remainingTermYears: input.purchase.remainingTermYears,
       propertyTax: input.property.propertyTax,
@@ -194,6 +195,15 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
     "Don't know": "variable", // Default to variable for penalty calc (lower penalty)
   };
 
+  // Map payment frequency
+  const paymentFrequencyMap: Record<string, PaymentFrequency> = {
+    Monthly: "monthly",
+    "Bi-weekly": "bi-weekly",
+    "Accelerated bi-weekly": "accelerated-bi-weekly",
+    Weekly: "weekly",
+    "Accelerated weekly": "accelerated-weekly",
+  };
+
   // Map form property type
   const propertyTypeMap: Record<string, PropertyType> = {
     "Detached House": "detached",
@@ -246,6 +256,7 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
       mortgageBalance: mortgageBalance,
       mortgageRate: Number(body.mortgageRate),
       mortgageType: body.mortgageType ? (mortgageTypeMap[String(body.mortgageType)] ?? "variable") : "variable",
+      paymentFrequency: paymentFrequencyMap[String(body.paymentFrequency)] ?? "monthly",
       amortizationYears: body.amortizationYearsRemaining ? Number(body.amortizationYearsRemaining) : 25,
       remainingTermYears: body.remainingTermYears ? Number(body.remainingTermYears) : 3,
     },
@@ -255,7 +266,7 @@ function validateAndTransform(body: Record<string, unknown>): AssessmentInput {
       bedrooms: Number(body.bedrooms),
       bathrooms: Number(body.bathrooms),
       squareFeet: Number(body.sqft) || 0,
-      condoFees: Number(body.monthlyCondoFees) || 0,
+      condoFees: Number(body.monthlyStrataFees || body.monthlyCondoFees) || 0,
       propertyTax: Number(body.annualPropertyTax),
       majorRenovations: String(body.majorRenovations || ""),
     },

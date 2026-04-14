@@ -56,6 +56,7 @@ export interface PurchaseInfo {
   mortgageBalance: number;
   mortgageRate: number;
   mortgageType: MortgageType;
+  paymentFrequency: string;
   amortizationYears: number;
   remainingTermYears: number;
 }

@@ -18,6 +18,14 @@ const MORTGAGE_TYPES = [
   "Don't know",
 ] as const;
 
+const PAYMENT_FREQUENCIES = [
+  "Monthly",
+  "Bi-weekly",
+  "Accelerated bi-weekly",
+  "Weekly",
+  "Accelerated weekly",
+] as const;
+
 const SELLING_REASONS = [
   "Downsizing",
   "Upgrading",
@@ -48,12 +56,14 @@ type FormData = {
   bedrooms: string;
   bathrooms: string;
   estimatedCurrentValue: string;
+  monthlyStrataFees: string;
   // Step 2: Mortgage
   purchasePrice: string;
   purchaseYear: string;
   currentMortgageBalance: string;
   mortgageRate: string;
   mortgageType: string;
+  paymentFrequency: string;
   annualPropertyTax: string;
   // Step 3: About you
   sellingReason: string;
@@ -74,11 +84,13 @@ const INITIAL_FORM: FormData = {
   bedrooms: "",
   bathrooms: "",
   estimatedCurrentValue: "",
+  monthlyStrataFees: "",
   purchasePrice: "",
   purchaseYear: "",
   currentMortgageBalance: "",
   mortgageRate: "",
   mortgageType: "",
+  paymentFrequency: "",
   annualPropertyTax: "",
   sellingReason: "",
   timeline: "",
@@ -456,7 +468,10 @@ function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormD
         }
       }} options={PROPERTY_TYPES} />
       {showUnit && (
-        <Input id="unit" label="Unit / Suite Number" value={form.unit} onChange={handleUnitChange} placeholder="e.g. 510" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input id="unit" label="Unit / Suite Number" value={form.unit} onChange={handleUnitChange} placeholder="e.g. 510" />
+          <Input id="monthlyStrataFees" label="Monthly Strata Fees" type="number" value={form.monthlyStrataFees} onChange={(v) => update({ monthlyStrataFees: v })} placeholder="450" prefix="$" />
+        </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Input id="bedrooms" label="Bedrooms" type="number" value={form.bedrooms} onChange={(v) => update({ bedrooms: v })} placeholder="3" />
@@ -487,6 +502,7 @@ function Step2({ form, update }: { form: FormData; update: (patch: Partial<FormD
         <Input id="mortgageRate" label="Mortgage Rate" type="number" value={form.mortgageRate} onChange={(v) => update({ mortgageRate: v })} placeholder="4.5" suffix="%" />
         <Select id="mortgageType" label="Mortgage Type" value={form.mortgageType} onChange={(v) => update({ mortgageType: v })} options={MORTGAGE_TYPES} placeholder="Select type" />
       </div>
+      <Select id="paymentFrequency" label="Payment Frequency" value={form.paymentFrequency} onChange={(v) => update({ paymentFrequency: v })} options={PAYMENT_FREQUENCIES} placeholder="Select frequency" />
       <Input id="annualPropertyTax" label="Annual Property Tax" type="number" value={form.annualPropertyTax} onChange={(v) => update({ annualPropertyTax: v })} placeholder="4,500" prefix="$" />
     </div>
   );
@@ -575,7 +591,7 @@ export default function AssessPage() {
       case 0:
         return !!(form.streetAddress && form.city && form.province && form.propertyType && form.bedrooms && form.bathrooms && form.estimatedCurrentValue);
       case 1:
-        return !!(form.purchasePrice && form.purchaseYear && form.currentMortgageBalance && form.mortgageRate && form.mortgageType && form.annualPropertyTax);
+        return !!(form.purchasePrice && form.purchaseYear && form.currentMortgageBalance && form.mortgageRate && form.mortgageType && form.paymentFrequency && form.annualPropertyTax);
       case 2:
         return !!(form.sellingReason && form.timeline && form.firstName && form.lastName && form.email && form.consent);
       default:

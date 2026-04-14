@@ -2,6 +2,13 @@ import type { FinancialBreakdown, MortgageType } from "./types";
 
 // ── Input for financial calculations ──────────────────────────────────────────
 
+export type PaymentFrequency =
+  | "monthly"
+  | "bi-weekly"
+  | "accelerated-bi-weekly"
+  | "weekly"
+  | "accelerated-weekly";
+
 export interface CalcInput {
   purchasePrice: number;
   purchaseYear: number;
@@ -9,6 +16,7 @@ export interface CalcInput {
   mortgageBalance: number;
   mortgageRate: number; // annual percentage, e.g. 4.5
   mortgageType: MortgageType;
+  paymentFrequency: PaymentFrequency;
   amortizationYearsRemaining: number;
   remainingTermYears: number;
   propertyTax: number; // annual
@@ -201,18 +209,65 @@ export interface CarryingCosts {
   total: number;
 }
 
+/**
+ * Convert a per-payment mortgage amount to a monthly equivalent based on frequency.
+ *
+ * - Monthly: 1 payment/month (12/year)
+ * - Bi-weekly: payment = monthly / 2, 26 payments/year → monthly equiv = payment × 26 / 12
+ * - Accelerated bi-weekly: payment = monthly / 2, 26 payments/year (pays off faster)
+ * - Weekly: payment = monthly / 4, 52 payments/year → monthly equiv = payment × 52 / 12
+ * - Accelerated weekly: payment = monthly / 4, 52 payments/year (pays off faster)
+ *
+ * For accelerated schedules, the per-payment amount equals the non-accelerated amount
+ * but there are more payments per year, so the monthly cost is higher.
+ */
+function mortgageMonthlyEquivalent(
+  balance: number,
+  annualRate: number,
+  amortizationYearsRemaining: number,
+  frequency: PaymentFrequency
+): number {
+  // Base monthly payment
+  const monthly = monthlyMortgagePayment(
+    balance,
+    annualRate,
+    amortizationYearsRemaining * 12
+  );
+
+  switch (frequency) {
+    case "monthly":
+      return monthly;
+    case "bi-weekly":
+      // 26 payments/year, each = annual cost / 26
+      return (monthly * 12) / 12; // same annual cost, same monthly equiv
+    case "accelerated-bi-weekly":
+      // payment = monthly / 2, but 26 payments/year → annual = monthly/2 × 26 = monthly × 13
+      return (monthly * 13) / 12;
+    case "weekly":
+      // 52 payments/year, each = annual cost / 52
+      return (monthly * 12) / 12; // same annual cost
+    case "accelerated-weekly":
+      // payment = monthly / 4, but 52 payments/year → annual = monthly/4 × 52 = monthly × 13
+      return (monthly * 13) / 12;
+    default:
+      return monthly;
+  }
+}
+
 export function calculateMonthlyCarryingCosts(
   mortgageBalance: number,
   mortgageRate: number,
   amortizationYearsRemaining: number,
   annualPropertyTax: number,
   monthlyCondoFees: number,
-  estimatedValue: number
+  estimatedValue: number,
+  paymentFrequency: PaymentFrequency = "monthly"
 ): CarryingCosts {
-  const mortgage = monthlyMortgagePayment(
+  const mortgage = mortgageMonthlyEquivalent(
     mortgageBalance,
     mortgageRate,
-    amortizationYearsRemaining * 12
+    amortizationYearsRemaining,
+    paymentFrequency
   );
 
   const propertyTax = annualPropertyTax / 12;
@@ -294,7 +349,8 @@ export function calculateFinancials(input: CalcInput): FinancialBreakdown {
     input.amortizationYearsRemaining,
     input.propertyTax,
     input.condoFees,
-    input.estimatedValue
+    input.estimatedValue,
+    input.paymentFrequency
   );
 
   // Break-even
