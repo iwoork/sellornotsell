@@ -1,21 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { CITIES_BY_PROVINCE } from "@/lib/cities";
-
-const PROVINCES = [
-  "Alberta",
-  "British Columbia",
-  "Manitoba",
-  "New Brunswick",
-  "Newfoundland and Labrador",
-  "Nova Scotia",
-  "Ontario",
-  "Prince Edward Island",
-  "Quebec",
-  "Saskatchewan",
-] as const;
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const PROPERTY_TYPES = [
   "Detached House",
@@ -229,133 +215,144 @@ function Select({
   );
 }
 
-function CityCombobox({
+// Map Google's administrative_area_level_1 short names to full province names
+const PROVINCE_MAP: Record<string, string> = {
+  AB: "Alberta",
+  BC: "British Columbia",
+  MB: "Manitoba",
+  NB: "New Brunswick",
+  NL: "Newfoundland and Labrador",
+  NS: "Nova Scotia",
+  ON: "Ontario",
+  PE: "Prince Edward Island",
+  QC: "Quebec",
+  SK: "Saskatchewan",
+  NT: "Northwest Territories",
+  NU: "Nunavut",
+  YT: "Yukon",
+};
+
+declare global {
+  interface Window {
+    google?: typeof google;
+  }
+}
+
+function PlacesAutocomplete({
   value,
-  onChange,
-  province,
+  onSelect,
 }: {
   value: string;
-  onChange: (v: string) => void;
-  province: string;
+  onSelect: (city: string, province: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [highlighted, setHighlighted] = useState(-1);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [inputValue, setInputValue] = useState(value);
 
-  const allCities = province && province in CITIES_BY_PROVINCE
-    ? (CITIES_BY_PROVINCE[province as keyof typeof CITIES_BY_PROVINCE] ?? [])
-    : Object.values(CITIES_BY_PROVINCE).flat().sort();
-
-  const filtered = value
-    ? allCities.filter((c) => c.toLowerCase().includes(value.toLowerCase()))
-    : allCities;
-
+  // Sync external value changes
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
+    setInputValue(value);
+  }, [value]);
+
+  const initAutocomplete = useCallback(() => {
+    if (!inputRef.current || !window.google?.maps?.places || autocompleteRef.current) return;
+
+    const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
+      types: ["(cities)"],
+      componentRestrictions: { country: "ca" },
+      fields: ["address_components"],
+    });
+
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      if (!place.address_components) return;
+
+      let city = "";
+      let province = "";
+
+      for (const comp of place.address_components) {
+        if (comp.types.includes("locality")) {
+          city = comp.long_name;
+        } else if (comp.types.includes("sublocality_level_1") && !city) {
+          city = comp.long_name;
+        } else if (comp.types.includes("administrative_area_level_1")) {
+          province = PROVINCE_MAP[comp.short_name] || comp.long_name;
+        }
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+      if (city) {
+        setInputValue(city);
+        onSelect(city, province);
+      }
+    });
+
+    autocompleteRef.current = ac;
+  }, [onSelect]);
 
   useEffect(() => {
-    setHighlighted(-1);
-  }, [value, open]);
-
-  useEffect(() => {
-    if (highlighted >= 0 && listRef.current) {
-      const el = listRef.current.children[highlighted] as HTMLElement | undefined;
-      el?.scrollIntoView({ block: "nearest" });
-    }
-  }, [highlighted]);
-
-  function select(city: string) {
-    onChange(city);
-    setOpen(false);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
-      setOpen(true);
+    // If Google Maps is already loaded, init immediately
+    if (window.google?.maps?.places) {
+      initAutocomplete();
       return;
     }
-    if (!open) return;
 
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlighted((h) => (h < filtered.length - 1 ? h + 1 : 0));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlighted((h) => (h > 0 ? h - 1 : filtered.length - 1));
-    } else if (e.key === "Enter" && highlighted >= 0) {
-      e.preventDefault();
-      select(filtered[highlighted]);
-    } else if (e.key === "Escape") {
-      setOpen(false);
-    }
-  }
+    // Otherwise, poll until it's available (loaded via layout Script)
+    const interval = setInterval(() => {
+      if (window.google?.maps?.places) {
+        initAutocomplete();
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [initAutocomplete]);
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div className="sm:col-span-2">
       <label htmlFor="city" className="block text-sm font-medium text-foreground mb-1.5">
         City
       </label>
       <input
+        ref={inputRef}
         id="city"
         type="text"
-        role="combobox"
-        aria-expanded={open}
-        aria-autocomplete="list"
-        aria-controls="city-listbox"
         autoComplete="off"
-        placeholder="Type or select a city"
-        value={value}
+        placeholder="Start typing a Canadian city..."
+        value={inputValue}
         onChange={(e) => {
-          onChange(e.target.value);
-          setOpen(true);
+          setInputValue(e.target.value);
         }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={handleKeyDown}
         className="block w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow"
       />
-      {open && filtered.length > 0 && (
-        <ul
-          id="city-listbox"
-          ref={listRef}
-          role="listbox"
-          className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-xl border border-border bg-card shadow-lg"
-        >
-          {filtered.map((city, i) => (
-            <li
-              key={city}
-              role="option"
-              aria-selected={highlighted === i}
-              onMouseDown={() => select(city)}
-              onMouseEnter={() => setHighlighted(i)}
-              className={`cursor-pointer px-4 py-2.5 text-sm ${
-                highlighted === i
-                  ? "bg-primary-light text-primary font-medium"
-                  : "text-foreground hover:bg-surface"
-              } ${value.toLowerCase() === city.toLowerCase() ? "font-semibold" : ""}`}
-            >
-              {city}
-            </li>
-          ))}
-        </ul>
+      {inputValue && !value && (
+        <p className="mt-1 text-xs text-muted">Select a city from the dropdown</p>
       )}
     </div>
   );
 }
 
 function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormData>) => void }) {
+  const handlePlaceSelect = useCallback(
+    (city: string, province: string) => {
+      update({ city, province });
+    },
+    [update],
+  );
+
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <CityCombobox value={form.city} onChange={(v) => update({ city: v })} province={form.province} />
-        <Select id="province" label="Province" value={form.province} onChange={(v) => update({ province: v })} options={PROVINCES} placeholder="Select province" />
+        <PlacesAutocomplete
+          value={form.city}
+          onSelect={handlePlaceSelect}
+        />
+        {form.province && (
+          <div className="flex items-end">
+            <div className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground">
+              {form.province}
+            </div>
+          </div>
+        )}
       </div>
       <Select id="propertyType" label="Property Type" value={form.propertyType} onChange={(v) => update({ propertyType: v })} options={PROPERTY_TYPES} />
       <div className="grid gap-4 sm:grid-cols-2">
