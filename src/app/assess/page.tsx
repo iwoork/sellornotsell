@@ -360,15 +360,33 @@ function PlacesAutocomplete({
 }
 
 function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormData>) => void }) {
+  const [assessedHint, setAssessedHint] = useState<string | null>(null);
+
   const handlePlaceSelect = useCallback(
-    (city: string, province: string) => {
+    async (city: string, province: string) => {
       update({ city, province });
+      setAssessedHint(null);
+
+      // Try to prefill estimated value from BC Assessment data
+      try {
+        const res = await fetch(`/api/assessed-value?city=${encodeURIComponent(city)}`);
+        if (res.ok) {
+          const { assessedValue } = await res.json();
+          if (assessedValue && !form.estimatedCurrentValue) {
+            update({ estimatedCurrentValue: String(assessedValue) });
+            setAssessedHint(`Pre-filled from BC Assessment avg (${assessedValue.toLocaleString("en-CA")})`);
+          }
+        }
+      } catch {
+        // Silently fail — user can still enter manually
+      }
     },
-    [update],
+    [update, form.estimatedCurrentValue],
   );
 
   const handlePlaceClear = useCallback(() => {
     update({ city: "", province: "" });
+    setAssessedHint(null);
   }, [update]);
 
   return (
@@ -386,7 +404,12 @@ function Step1({ form, update }: { form: FormData; update: (patch: Partial<FormD
         <Input id="bedrooms" label="Bedrooms" type="number" value={form.bedrooms} onChange={(v) => update({ bedrooms: v })} placeholder="3" />
         <Input id="bathrooms" label="Bathrooms" type="number" value={form.bathrooms} onChange={(v) => update({ bathrooms: v })} placeholder="2" />
       </div>
-      <Input id="estimatedCurrentValue" label="Estimated Market Value" type="number" value={form.estimatedCurrentValue} onChange={(v) => update({ estimatedCurrentValue: v })} placeholder="650,000" prefix="$" />
+      <div>
+        <Input id="estimatedCurrentValue" label="Estimated Market Value" type="number" value={form.estimatedCurrentValue} onChange={(v) => { update({ estimatedCurrentValue: v }); setAssessedHint(null); }} placeholder="650,000" prefix="$" />
+        {assessedHint && (
+          <p className="mt-1 text-xs text-primary">{assessedHint}</p>
+        )}
+      </div>
     </div>
   );
 }
