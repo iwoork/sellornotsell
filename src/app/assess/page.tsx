@@ -245,60 +245,73 @@ function PlacesAutocomplete({
   value: string;
   onSelect: (city: string, province: string) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const [inputValue, setInputValue] = useState(value);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const elementRef = useRef<any>(null);
+  const [selected, setSelected] = useState(!!value);
 
-  // Sync external value changes
   useEffect(() => {
-    setInputValue(value);
+    setSelected(!!value);
   }, [value]);
 
-  const initAutocomplete = useCallback(() => {
-    if (!inputRef.current || !window.google?.maps?.places || autocompleteRef.current) return;
+  const initAutocomplete = useCallback(async () => {
+    if (!window.google?.maps || elementRef.current || !containerRef.current) return;
 
-    const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
-      types: ["(cities)"],
-      componentRestrictions: { country: "ca" },
-      fields: ["address_components"],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const placesLib = await window.google.maps.importLibrary("places") as any;
+    const PlaceAutocompleteElement = placesLib.PlaceAutocompleteElement;
+    if (!PlaceAutocompleteElement) return;
+
+    const pac = new PlaceAutocompleteElement({
+      includedPrimaryTypes: ["locality"],
+      includedRegionCodes: ["ca"],
     });
 
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      if (!place.address_components) return;
+    pac.addEventListener("gmp-select", async (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const placePrediction = (e as any).placePrediction ?? (e as any).detail?.placePrediction;
+      if (!placePrediction) return;
+
+      const place = placePrediction.toPlace();
+      await place.fetchFields({ fields: ["addressComponents"] });
+
+      const components = place.addressComponents;
+      if (!components) return;
 
       let city = "";
       let province = "";
 
-      for (const comp of place.address_components) {
-        if (comp.types.includes("locality")) {
-          city = comp.long_name;
-        } else if (comp.types.includes("sublocality_level_1") && !city) {
-          city = comp.long_name;
-        } else if (comp.types.includes("administrative_area_level_1")) {
-          province = PROVINCE_MAP[comp.short_name] || comp.long_name;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const comp of components as any[]) {
+        const types: string[] = comp.types;
+        if (types.includes("locality")) {
+          city = comp.longText ?? comp.long_name;
+        } else if (types.includes("sublocality_level_1") && !city) {
+          city = comp.longText ?? comp.long_name;
+        } else if (types.includes("administrative_area_level_1")) {
+          province = PROVINCE_MAP[comp.shortText ?? comp.short_name] || comp.longText || comp.long_name;
         }
       }
 
       if (city) {
-        setInputValue(city);
+        setSelected(true);
         onSelect(city, province);
       }
     });
 
-    autocompleteRef.current = ac;
+    containerRef.current.appendChild(pac);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    elementRef.current = pac as any;
   }, [onSelect]);
 
   useEffect(() => {
-    // If Google Maps is already loaded, init immediately
-    if (window.google?.maps?.places) {
+    if (window.google?.maps) {
       initAutocomplete();
       return;
     }
 
-    // Otherwise, poll until it's available (loaded via layout Script)
     const interval = setInterval(() => {
-      if (window.google?.maps?.places) {
+      if (window.google?.maps) {
         initAutocomplete();
         clearInterval(interval);
       }
@@ -309,23 +322,15 @@ function PlacesAutocomplete({
 
   return (
     <div className="sm:col-span-2">
-      <label htmlFor="city" className="block text-sm font-medium text-foreground mb-1.5">
+      <label className="block text-sm font-medium text-foreground mb-1.5">
         City
       </label>
-      <input
-        ref={inputRef}
-        id="city"
-        type="text"
-        autoComplete="off"
-        placeholder="Start typing a Canadian city..."
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-        }}
-        className="block w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-shadow"
+      <div
+        ref={containerRef}
+        className="places-autocomplete-wrapper"
       />
-      {inputValue && !value && (
-        <p className="mt-1 text-xs text-muted">Select a city from the dropdown</p>
+      {selected && value && (
+        <p className="mt-1 text-xs text-primary">{value}</p>
       )}
     </div>
   );

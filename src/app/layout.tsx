@@ -92,7 +92,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">{children}</body>
       {process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY && (
         <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&libraries=places`}
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&libraries=places&loading=async&v=weekly`}
           strategy="lazyOnload"
         />
       )}
