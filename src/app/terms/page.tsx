@@ -183,9 +183,17 @@ export default function TermsPage() {
           <div className="text-xs text-muted">
             &copy; {new Date().getFullYear()} SellOrNotSell.com
           </div>
-          <nav className="flex gap-6 text-xs text-muted">
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <a
+              href="https://searchstrata.com"
+              target="_blank"
+              rel="noopener"
+              className="hover:text-foreground transition-colors"
+            >
+              Analyze Strata Documents with AI
+            </a>
           </nav>
         </div>
       </footer>

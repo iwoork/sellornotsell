@@ -330,9 +330,17 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       <footer className="border-t border-border bg-card px-6 py-6">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <div className="text-xs text-muted">&copy; {new Date().getFullYear()} SellOrNotSell.com</div>
-          <nav className="flex gap-6 text-xs text-muted">
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <a
+              href="https://searchstrata.com"
+              target="_blank"
+              rel="noopener"
+              className="hover:text-foreground transition-colors"
+            >
+              Analyze Strata Documents with AI
+            </a>
           </nav>
         </div>
       </footer>
